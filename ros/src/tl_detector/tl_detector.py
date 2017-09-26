@@ -5,7 +5,9 @@ from geometry_msgs.msg import PoseStamped, Pose
 from styx_msgs.msg import TrafficLightArray, TrafficLight
 from styx_msgs.msg import Lane
 from sensor_msgs.msg import Image
+from std_msgs.msg import Header
 from cv_bridge import CvBridge
+# from PIL import Image as PIL_Image
 from light_classification.tl_classifier import TLClassifier
 import tf
 from tf import transformations as t
@@ -69,6 +71,8 @@ class TLDetector(object):
         self.config = yaml.load(config_string)
 
         self.upcoming_red_light_pub = rospy.Publisher('/traffic_waypoint', Int32, queue_size=1)
+
+        self.image_test = rospy.Publisher('/image_test', Image, queue_size=1)
 
         self.bridge = CvBridge()
         self.light_classifier = TLClassifier()
@@ -171,8 +175,8 @@ class TLDetector(object):
                 # Crop project traffic light position and crop image
                 height, width, channels = cv_image.shape
                 pos = light.pose.pose.position
-                x_up, y_up = self.project_to_image_plane(pos, 0.7, 1, pose_msg)
-                x_down, y_down = self.project_to_image_plane(pos, -0.7, -1, pose_msg)
+                x_up, y_up = self.project_to_image_plane(pos, 0.5, 1, pose_msg)
+                x_down, y_down = self.project_to_image_plane(pos, -0.5, -1, pose_msg)
                 rospy.loginfo('x_up = {}, y_up = {}, x_down = {}, y_down = {} === hw = {}:{}'.format(x_up, y_up, x_down, y_down, height, width))
 
                 if x_up > width or y_down > height or x_up < 0 or y_down < 0:
@@ -182,14 +186,17 @@ class TLDetector(object):
 
                 if x_down is None or x_up is None or y_up is None or y_down is None:
                     return TrafficLight.UNKNOWN
-                if np.abs(x_down - x_up) < 20 or np.abs(y_down-y_up) < 40:
+                if x_down - x_up < 20 or y_down - y_up < 40:
                     return TrafficLight.UNKNOWN
 
                 output_crop = cpy[int(y_up):int(y_down), int(x_up):int(x_down)]
                 # cv2.circle(cpy, ((x_up+x_down)/2, (y_up+y_down)/2), 10, (0, 255, 0), 2)
 
-
+                rospy.loginfo('to file ...')
                 cv2.imwrite(img_filename, output_crop)
+
+                rospy.loginfo('to topic ...')
+                self.publish_image_test(output_crop)
 
                 # rospy.loginfo('img_record = {}'.format(img_record))
 
@@ -309,7 +316,7 @@ class TLDetector(object):
             fx = 2574
             fy = 2744
             point_cam[2] -= 1.0
-            cx = image_width/2 - 30
+            cx = image_width/2 - 35
             cy = image_height + 50
         lx = -point_cam[1] * fx / point_cam[0];
         ly = -point_cam[2] * fy / point_cam[0];
@@ -348,6 +355,9 @@ class TLDetector(object):
 
         output_crop = cpy[int(y_up):int(y_down), int(x_up):int(x_down)]
 
+        # Publish to debug topic
+        self.publish_image_test(output_crop)
+
 
         # save cropped image
         crop_folder = os.path.join('.', 'output_images', self.record_name, 'crop')
@@ -379,7 +389,6 @@ class TLDetector(object):
         #TODO find the closest visible traffic light (if one exists)\
 
 
-
         # Select the closest waypoint from lights array which was received from /vehicle/traffic_lights topic
         if (self.lights and self.waypoints):
 
@@ -401,8 +410,6 @@ class TLDetector(object):
             rospy.loginfo('SIM: closest_light_wp = {}, state = {}'.format(light_wp, light.state))
 
 
-
-
         if light:
             waypoints_num = len(self.waypoints.waypoints)
             light_dist = (light_wp - car_wp + waypoints_num) % waypoints_num
@@ -414,6 +421,15 @@ class TLDetector(object):
             return light_wp, state
         # self.waypoints = None # don't know why this line is here [Pavlo]
         return -1, TrafficLight.UNKNOWN
+
+    # Publish image for debug output
+    def publish_image_test(self, image):
+        image_message = self.bridge.cv2_to_imgmsg(image, encoding="bgr8") # , encoding="rgb8"
+        image_message.header = Header()
+        image_message.header.stamp = rospy.Time.now()
+        image_message.header.frame_id = '/world'
+        self.image_test.publish(image_message)
+
 
 if __name__ == '__main__':
     try:
