@@ -58,9 +58,13 @@ class TLDetector(object):
         pose_sub = message_filters.Subscriber('/current_pose', PoseStamped)
         lights_sub = message_filters.Subscriber('/vehicle/traffic_lights', TrafficLightArray)
 
-        ts = message_filters.ApproximateTimeSynchronizer([image_sub, pose_sub, lights_sub], 10, 0.005)
         # Uncomment this line to start collecting data
+        # ts = message_filters.ApproximateTimeSynchronizer([image_sub, pose_sub, lights_sub], 10, 0.005)
         # ts.registerCallback(self.image_sync)
+
+        # Porocess image for traffic lights
+        ts = message_filters.ApproximateTimeSynchronizer([image_sub, pose_sub], 10, 0.005)
+        ts.registerCallback(self.process_traffic_lights_sync)
 
         self.record_name = time.strftime("%Y%m%d%H%M%S") # , datetime.datetime.now()
         self.records = []
@@ -85,6 +89,10 @@ class TLDetector(object):
 
         self.record_cnt = 0
 
+        # It should be False for final submission, because we want to use provided transform
+        # rather than our own from pose
+        self.use_pose_transform = False
+
 
         rospy.spin()
 
@@ -100,6 +108,32 @@ class TLDetector(object):
         self.lights = msg.lights
         # rospy.loginfo('>>> got traffic_lights')
 
+    def process_traffic_lights_sync(self, image_msg, pose_msg):
+        rospy.loginfo('---- PROCESS TRAFFIC LIGHTS SYNC ------')
+        self.has_image = True
+        self.camera_image = msg
+        self.pose = msg
+
+        light_wp, state = self.process_traffic_lights()
+
+
+        '''
+        Publish upcoming red lights at camera frequency.
+        Each predicted state has to occur `STATE_COUNT_THRESHOLD` number
+        of times till we start using it. Otherwise the previous stable state is
+        used.
+        '''
+        if self.state != state:
+            self.state_count = 0
+            self.state = state
+        elif self.state_count >= STATE_COUNT_THRESHOLD:
+            self.last_state = self.state
+            light_wp = light_wp if state == TrafficLight.RED else -1
+            self.last_wp = light_wp
+            self.upcoming_red_light_pub.publish(Int32(light_wp))
+        else:
+            self.upcoming_red_light_pub.publish(Int32(self.last_wp))
+        self.state_count += 1
 
     # Used for recording sim training data ONLY
     def image_sync(self, image_msg, pose_msg, lights_msg):
@@ -222,19 +256,25 @@ class TLDetector(object):
             msg (Image): image from car-mounted camera
 
         """
+
+        '''
         self.has_image = True
         self.camera_image = msg
         # rospy.loginfo('>>> got image')
 
 
         light_wp, state = self.process_traffic_lights()
+        '''
 
+        if self.pose:
+            self.process_traffic_lights_sync(self.camera_image, self.pose)
 
         '''
         Publish upcoming red lights at camera frequency.
         Each predicted state has to occur `STATE_COUNT_THRESHOLD` number
         of times till we start using it. Otherwise the previous stable state is
         used.
+        '''
         '''
         if self.state != state:
             self.state_count = 0
@@ -247,6 +287,8 @@ class TLDetector(object):
         else:
             self.upcoming_red_light_pub.publish(Int32(self.last_wp))
         self.state_count += 1
+        '''
+
 
     def get_closest_waypoint(self, pose):
         """Identifies the closest path waypoint to the given position
@@ -278,22 +320,31 @@ class TLDetector(object):
         transT = None
         rotT = None
 
-        # This code we need for site mode (and simulator)
-        try:
-            now = rospy.Time.now()
-            self.listener.waitForTransform("/base_link",
-                  "/world", now, rospy.Duration(1.0))
-            (transT, rotT) = self.listener.lookupTransform("/base_link",
-                  "/world", now)
-
-        except (tf.Exception, tf.LookupException, tf.ConnectivityException):
-            rospy.logerr("Failed to find camera to map transform")
-            return None, None
+        # Use provided pose or if use_pose_transform is set use
+        # self.pose
+        if not pose and self.use_pose_transform:
+            pose = self.pose
 
 
-        # This code is used by image_sync because we want to use transform from current pose
         if pose:
+            # This code is used by image_sync because we want to use transform from current pose
+            # or when we work with provided bag
             transT, rotT = helper.get_inverse_trans_rot(self.pose)
+        else:
+            # This code we need for site mode (and simulator)
+            try:
+                now = rospy.Time.now()
+                self.listener.waitForTransform("/base_link",
+                      "/world", now, rospy.Duration(1.0))
+                (transT, rotT) = self.listener.lookupTransform("/base_link",
+                      "/world", now)
+
+            except (tf.Exception, tf.LookupException, tf.ConnectivityException):
+                rospy.logerr("Failed to find camera to map transform")
+                return None, None
+
+
+
 
         px = point_in_world.x
         py = point_in_world.y

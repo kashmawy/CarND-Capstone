@@ -26,7 +26,7 @@ TODO (for Yousuf and Aaron): Stopline location for each traffic light.
 
 LOOKAHEAD_WPS = 200 # Number of waypoints we will publish. You can change this number
 ONE_MPH = 0.44704 # mph to mps
-TARGET_SPEED = 8.0 * ONE_MPH
+# TARGET_SPEED = 8.0 * ONE_MPH
 MAX_DECEL = 5.0 # m/s/s
 
 dl = lambda a, b: math.sqrt((a.x-b.x)**2 + (a.y-b.y)**2  + (a.z-b.z)**2)
@@ -47,6 +47,8 @@ class WaypointUpdater(object):
         # TODO: Add other member variables you need below
         self.waypoints = None
         self.red_light_wp = -1
+
+        self.target_speed = rospy.get_param('~target_speed') / 3.6 # mps
 
         self.slowing_down = False
 
@@ -75,7 +77,7 @@ class WaypointUpdater(object):
 
         final_waypoints = []
 
-        target_speed = TARGET_SPEED
+        target_speed = self.target_speed
 
         # Distance to red light in waypoints
         wps_to_light = (self.red_light_wp - wp_next + waypoints_num) % waypoints_num
@@ -105,18 +107,18 @@ class WaypointUpdater(object):
         if self.red_light_wp < 0:
             # There is no red light ahead, so just set up max speed
             uniform_speed = True
-            target_speed = TARGET_SPEED
+            target_speed = self.target_speed
             self.slowing_down = False
         elif wps_to_light > LOOKAHEAD_WPS:
             # Red light is farther than number of points to return,
             # so again use max speed for all waypoints
             uniform_speed = True
-            target_speed = TARGET_SPEED
+            target_speed = self.target_speed
             self.slowing_down = False
         elif wps_to_light < rl_stop_line_nearest and not self.slowing_down:
             # Red light is too close for us to stop, move forward
             uniform_speed = True
-            target_speed = TARGET_SPEED
+            target_speed = self.target_speed
         elif wps_to_light < rl_stop_line:
             # Red light is already too close, stop our car quickly
             uniform_speed = True
@@ -154,8 +156,8 @@ class WaypointUpdater(object):
                   # v = sqrt(2 * dist * max_decel)
 
                   #   speed = math.sqrt(2 * dist_rl_stop * MAX_DECEL)
-                  speed = TARGET_SPEED
-                  waypoint.twist.twist.linear.x = min(TARGET_SPEED, speed)
+                  speed = self.target_speed
+                  waypoint.twist.twist.linear.x = min(self.target_speed, speed)
 
                   dist_rl_stop -= helper.wp_distance(wp_i, wp_i_next, self.waypoints)
                 else:
@@ -171,7 +173,7 @@ class WaypointUpdater(object):
 
             waypoint = self.waypoints[wp_i]
 
-            waypoint.twist.twist.linear.x = TARGET_SPEED
+            waypoint.twist.twist.linear.x = self.target_speed
 
             # Before red light set dec_len waypoints velocity to 0.0
             if self.red_light_wp > -1:
