@@ -39,6 +39,11 @@ class TLDetector(object):
         self.nr = 0
 
 
+        # It should be False for final submission, because we want to use provided transform
+        # rather than our own from pose
+        self.use_pose_transform = rospy.get_param('~use_pose_transform') # mps
+
+
         sub1 = rospy.Subscriber('/current_pose', PoseStamped, self.pose_cb, queue_size=1)
         sub2 = rospy.Subscriber('/base_waypoints', Lane, self.waypoints_cb, queue_size=1)
 
@@ -89,9 +94,7 @@ class TLDetector(object):
 
         self.record_cnt = 0
 
-        # It should be False for final submission, because we want to use provided transform
-        # rather than our own from pose
-        self.use_pose_transform = False
+
 
 
         rospy.spin()
@@ -110,9 +113,10 @@ class TLDetector(object):
 
     def process_traffic_lights_sync(self, image_msg, pose_msg):
         rospy.loginfo('---- PROCESS TRAFFIC LIGHTS SYNC ------')
+        rospy.loginfo('use_pose_transform = {}'.format(self.use_pose_transform))
         self.has_image = True
-        self.camera_image = msg
-        self.pose = msg
+        self.camera_image = image_msg
+        self.pose = pose_msg
 
         light_wp, state = self.process_traffic_lights()
 
@@ -344,8 +348,6 @@ class TLDetector(object):
                 return None, None
 
 
-
-
         px = point_in_world.x
         py = point_in_world.y
         pz = point_in_world.z
@@ -433,11 +435,6 @@ class TLDetector(object):
         light = None
         light_wp = -1
         light_positions = self.config['stop_line_positions']
-        if(self.pose):
-            car_position = self.get_closest_waypoint(self.pose.pose)
-
-        print(car_position)
-        #TODO find the closest visible traffic light (if one exists)\
 
 
         # Select the closest waypoint from lights array which was received from /vehicle/traffic_lights topic

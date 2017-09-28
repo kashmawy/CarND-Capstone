@@ -21,7 +21,7 @@ class Controller(object):
         self.throttle_pid = pid.PID(kp = 0.6, ki = 0.004, kd = 0.2, mn=decel_limit, mx=accel_limit)
         self.throttle_filter = lowpass.LowPassFilter(tau = 0.0, ts = 1.0)
 
-        self.steer_pid = pid.PID(kp = 0.5, ki = 0.05, kd = 0.3, mn=-max_steer_angle, mx=max_steer_angle)
+        self.steer_pid = pid.PID(kp = 0.5, ki = 0.04, kd = 0.2, mn=-max_steer_angle, mx=max_steer_angle)
         self.steer_filter = lowpass.LowPassFilter(tau = 0.0, ts = 1.0)
 
         self.yaw_controller = YawController(wheel_base, steer_ratio, min_speed, max_lat_accel, max_steer_angle)
@@ -77,7 +77,7 @@ class Controller(object):
         # rospy.loginfo('ctrl: steering = {}'.format(steering))
         # steering = self.steer_filter.filt(steering)
 
-        steer = self.steer_filter.filt(steer + steering)
+        steer = self.steer_filter.filt(steer + 0.1 * steering)
 
         # steer = 0.0
 
