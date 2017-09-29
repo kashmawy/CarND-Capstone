@@ -25,6 +25,9 @@ import numpy as np
 STATE_COUNT_THRESHOLD = 3
 dl = lambda a, b: math.sqrt((a.x-b.x)**2 + (a.y-b.y)**2  + (a.z-b.z)**2)
 
+LIGHT_DETECT_DIST_MIN = 22 # m
+LIGHT_DETECT_DIST_MAX = 120 # m
+
 class TLDetector(object):
     def __init__(self):
         rospy.init_node('tl_detector')
@@ -41,7 +44,7 @@ class TLDetector(object):
 
         # It should be False for final submission, because we want to use provided transform
         # rather than our own from pose
-        self.use_pose_transform = rospy.get_param('~use_pose_transform') # mps
+        self.use_pose_transform = True # rospy.get_param('~use_pose_transform') # mps
 
 
         sub1 = rospy.Subscriber('/current_pose', PoseStamped, self.pose_cb, queue_size=1)
@@ -59,17 +62,17 @@ class TLDetector(object):
         sub6 = rospy.Subscriber('/image_color', Image, self.image_cb, queue_size=1)
 
         # Subscribers for sim training data recordings
-        image_sub = message_filters.Subscriber('/image_color', Image)
-        pose_sub = message_filters.Subscriber('/current_pose', PoseStamped)
-        lights_sub = message_filters.Subscriber('/vehicle/traffic_lights', TrafficLightArray)
+        # image_sub = message_filters.Subscriber('/image_color', Image)
+        # pose_sub = message_filters.Subscriber('/current_pose', PoseStamped)
+        # lights_sub = message_filters.Subscriber('/vehicle/traffic_lights', TrafficLightArray)
 
         # Uncomment this line to start collecting data
         # ts = message_filters.ApproximateTimeSynchronizer([image_sub, pose_sub, lights_sub], 10, 0.005)
         # ts.registerCallback(self.image_sync)
 
         # Porocess image for traffic lights
-        ts = message_filters.ApproximateTimeSynchronizer([image_sub, pose_sub], 10, 0.005)
-        ts.registerCallback(self.process_traffic_lights_sync)
+        # ts = message_filters.ApproximateTimeSynchronizer([image_sub, pose_sub], 10, 0.05)
+        # ts.registerCallback(self.process_traffic_lights_sync)
 
         self.record_name = time.strftime("%Y%m%d%H%M%S") # , datetime.datetime.now()
         self.records = []
@@ -112,8 +115,8 @@ class TLDetector(object):
         # rospy.loginfo('>>> got traffic_lights')
 
     def process_traffic_lights_sync(self, image_msg, pose_msg):
-        rospy.loginfo('---- PROCESS TRAFFIC LIGHTS SYNC ------')
-        rospy.loginfo('use_pose_transform = {}'.format(self.use_pose_transform))
+        # rospy.loginfo('---- PROCESS TRAFFIC LIGHTS SYNC ------')
+        # rospy.loginfo('use_pose_transform = {}'.format(self.use_pose_transform))
         self.has_image = True
         self.camera_image = image_msg
         self.pose = pose_msg
@@ -188,15 +191,16 @@ class TLDetector(object):
             # Is light close enough?
             waypoints_num = len(self.waypoints.waypoints)
             light_dist = (light_wp - car_wp + waypoints_num) % waypoints_num
+            light_dist_m = lights_dists[closest_light]
 
             # Save image
-            if 30 < light_dist < 200:
+            if LIGHT_DETECT_DIST_MIN < light_dist_m < LIGHT_DETECT_DIST_MAX:
 
                 self.record_cnt += 1
 
                 rospy.loginfo('--- =============== saving image record_cnt = {} ....'.format(self.record_cnt))
 
-                img_filename = os.path.join(output_folder, 'imgs_full', '{:06d}-{}-{}.png'.format(self.record_cnt, state, light_dist))
+                img_filename = os.path.join(output_folder, 'imgs_full', '{:06d}-{}-{}.png'.format(self.record_cnt, state, int(light_dist_m)))
 
                 img_record = {}
                 img_record['filename'] = img_filename
@@ -208,7 +212,7 @@ class TLDetector(object):
                 rospy.loginfo("--- saving: {}, dist = {}".format(img_filename, light_dist))
                 cv_image = self.bridge.imgmsg_to_cv2(image_msg, "bgr8")
 
-
+                '''
                 # Crop Image
                 # Crop project traffic light position and crop image
                 height, width, channels = cv_image.shape
@@ -229,12 +233,13 @@ class TLDetector(object):
 
                 output_crop = cpy[int(y_up):int(y_down), int(x_up):int(x_down)]
                 # cv2.circle(cpy, ((x_up+x_down)/2, (y_up+y_down)/2), 10, (0, 255, 0), 2)
+                '''
 
                 rospy.loginfo('to file ...')
-                cv2.imwrite(img_filename, output_crop)
+                cv2.imwrite(img_filename, cv_image) # output_crop
 
                 rospy.loginfo('to topic ...')
-                self.publish_image_test(output_crop)
+                self.publish_image_test(cv_image)
 
                 # rospy.loginfo('img_record = {}'.format(img_record))
 
@@ -248,7 +253,7 @@ class TLDetector(object):
 
 
             else:
-                rospy.loginfo("--- light is far away: {}".format(light_dist))
+                rospy.loginfo("--- light is far away: {:.2f} meters".format(light_dist_m))
 
 
 
@@ -261,37 +266,12 @@ class TLDetector(object):
 
         """
 
-        '''
         self.has_image = True
         self.camera_image = msg
         # rospy.loginfo('>>> got image')
 
-
-        light_wp, state = self.process_traffic_lights()
-        '''
-
         if self.pose:
             self.process_traffic_lights_sync(self.camera_image, self.pose)
-
-        '''
-        Publish upcoming red lights at camera frequency.
-        Each predicted state has to occur `STATE_COUNT_THRESHOLD` number
-        of times till we start using it. Otherwise the previous stable state is
-        used.
-        '''
-        '''
-        if self.state != state:
-            self.state_count = 0
-            self.state = state
-        elif self.state_count >= STATE_COUNT_THRESHOLD:
-            self.last_state = self.state
-            light_wp = light_wp if state == TrafficLight.RED else -1
-            self.last_wp = light_wp
-            self.upcoming_red_light_pub.publish(Int32(light_wp))
-        else:
-            self.upcoming_red_light_pub.publish(Int32(self.last_wp))
-        self.state_count += 1
-        '''
 
 
     def get_closest_waypoint(self, pose):
@@ -391,6 +371,7 @@ class TLDetector(object):
         height, width, channels = cv_image.shape
         pos = light.pose.pose.position
 
+        ''' # Decided to make classifier without cropping
         # Crop project traffic light position and crop image
         x_up, y_up = self.project_to_image_plane(pos, .5, 1)
         x_down, y_down = self.project_to_image_plane(pos, -.5, -1)
@@ -419,9 +400,10 @@ class TLDetector(object):
         crop_img_fname = os.path.join(crop_folder, 'crop{}.jpg'.format(self.nr))
         cv2.imwrite(crop_img_fname, output_crop)
         self.nr = self.nr + 1
+        '''
 
         # Get Classification
-        return self.light_classifier.get_classification(output_crop)
+        return self.light_classifier.get_classification(cv_image)
 
     def process_traffic_lights(self):
         """Finds closest visible traffic light, if one exists, and determines its
@@ -458,15 +440,29 @@ class TLDetector(object):
             rospy.loginfo('SIM: closest_light_wp = {}, state = {}'.format(light_wp, light.state))
 
 
+        # For debug output only
+        cv_image = self.bridge.imgmsg_to_cv2(self.camera_image, "bgr8")
+
         if light:
             waypoints_num = len(self.waypoints.waypoints)
             light_dist = (light_wp - car_wp + waypoints_num) % waypoints_num
+            light_dist_m = lights_dists[closest_light]
 
             # Look at the image and classify light
-            if 30 < light_dist < 200:
+            if LIGHT_DETECT_DIST_MIN < light_dist_m < LIGHT_DETECT_DIST_MAX:
             	state = self.get_light_state(light)
                 rospy.loginfo('CLASSIFIER STATE: state = {}'.format(state))
-            return light_wp, state
+
+                # Publish annotated image_test topic for debug
+                cv2.putText(cv_image, 'State: {}'.format(state), (100, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
+                self.publish_image_test(cv_image)
+
+                return light_wp, state
+
+
+        # Publish just image to image_test
+        self.publish_image_test(cv_image)
+
         # self.waypoints = None # don't know why this line is here [Pavlo]
         return -1, TrafficLight.UNKNOWN
 
