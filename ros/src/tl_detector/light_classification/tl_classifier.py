@@ -1,4 +1,5 @@
 from styx_msgs.msg import TrafficLight
+from keras.model import load_model
 from keras.preprocessing.image import img_to_array
 import numpy as np
 import keras.backend as K
@@ -13,9 +14,8 @@ class TLClassifier(object):
     def __init__(self):
         rospy.loginfo("TLClassifier starting")
         K.set_image_dim_ordering('tf')
-        self.model = SqueezeNet(3, (IMAGE_HEIGHT, IMAGE_WIDTH, 3))
-        fname = os.path.join('light_classification', 'trained_model/challenge1.weights')
-        self.model.load_weights(fname)
+        # self.model = SqueezeNet(3, (IMAGE_HEIGHT, IMAGE_WIDTH, 3))
+	self.model = load_model(os.path.join('light_clasification', 'trained_model/model.h5'))
         self.graph = tf.get_default_graph()
 
     def get_classification(self, image):
