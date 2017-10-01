@@ -8,14 +8,19 @@ import rospy
 import cv2
 import os
 import tensorflow as tf
+from keras.models import load_model
+
+# Model vgg16_trafficlight_simulator_model -> https://drive.google.com/open?id=0B5_xbblUg-gDR1FNUmRGekdNRFE
 
 class TLClassifier(object):
     def __init__(self):
         rospy.loginfo("TLClassifier starting")
         K.set_image_dim_ordering('tf')
-        self.model = SqueezeNet(3, (IMAGE_HEIGHT, IMAGE_WIDTH, 3))
-        fname = os.path.join('light_classification', 'trained_model/challenge1.weights')
-        self.model.load_weights(fname)
+        # self.model = SqueezeNet(3, (IMAGE_HEIGHT, IMAGE_WIDTH, 3))
+        # self.model = load_model(fname)
+        fname = os.path.join('light_classification', 'trained_model/vgg16_trafficlight_simulator_model.h5')
+        self.model = load_model(fname)
+        # self.model.load_weights(fname)
         self.graph = tf.get_default_graph()
 
     def get_classification(self, image):
@@ -29,7 +34,7 @@ class TLClassifier(object):
 
         """
         rospy.loginfo("TLClassifier get_classification")
-        image = cv2.resize(image, (224, 224))
+        image = cv2.resize(image, (200, 200))
         image = img_to_array(image)
         image /= 255.0
         image = np.expand_dims(image, axis=0)
@@ -38,11 +43,12 @@ class TLClassifier(object):
         prediction_result = np.argmax(preds)
 
         if prediction_result == 0:
-            rospy.loginfo('tl_classifier: No traffic light detected.')
-            return TrafficLight.UNKNOWN
-        elif prediction_result == 1:
             rospy.loginfo('tl_classifier: Red traffic light detected.')
+            print("Red traffic light")
             return TrafficLight.RED
-        else:
-            rospy.loginfo('tl_classifier: Green traffic light detected')
+        elif prediction_result == 2:
+            rospy.loginfo('tl_classifier: Green traffic light detected.')
             return TrafficLight.GREEN
+        else:
+            rospy.loginfo('tl_classifier: Unknown traffic light detected')
+            return TrafficLight.UNKNOWN

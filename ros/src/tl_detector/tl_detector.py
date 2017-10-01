@@ -40,6 +40,7 @@ class TLDetector(object):
         self.camera_image_prev_seq = None
         self.lights = []
         self.nr = 0
+        self.state = None
 
 
         # It should be False for final submission, because we want to use provided transform
