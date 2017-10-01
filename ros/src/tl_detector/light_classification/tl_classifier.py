@@ -16,12 +16,13 @@ class TLClassifier(object):
     def __init__(self):
         rospy.loginfo("TLClassifier starting")
         K.set_image_dim_ordering('tf')
-        # self.model = SqueezeNet(3, (IMAGE_HEIGHT, IMAGE_WIDTH, 3))
+        self.model = SqueezeNet(3, (IMAGE_HEIGHT, IMAGE_WIDTH, 3))
+        fname = os.path.join('light_classification', 'trained_model/challenge1.weights')
         # self.model = load_model(fname)
-        fname = os.path.join('light_classification', 'trained_model/vgg16_trafficlight_simulator_model.h5')
-        self.model = load_model(fname)
-        # self.model.load_weights(fname)
+        # self.model = load_model(fname)
+        self.model.load_weights(fname)
         self.graph = tf.get_default_graph()
+        # self.debug_img_counter = 1
 
     def get_classification(self, image):
         """Determines the color of the traffic light in the image
@@ -33,22 +34,34 @@ class TLClassifier(object):
             int: ID of traffic light color (specified in styx_msgs/TrafficLight)
 
         """
+        # save
+
+        # self.debug_img_counter = self.debug_img_counter + 1
+        # cv2.imwrite('image{0}.png'.format(self.debug_img_counter), image)
+        image = image.astype(dtype=float)
+        # print(image)
         rospy.loginfo("TLClassifier get_classification")
-        image = cv2.resize(image, (200, 200))
-        image = img_to_array(image)
+        image = cv2.resize(image, (IMAGE_HEIGHT, IMAGE_WIDTH))
+        # print(image.__shape__)
+        # image = np.asarray(image)
         image /= 255.0
         image = np.expand_dims(image, axis=0)
         with self.graph.as_default():
             preds = self.model.predict(image)[0]
-        prediction_result = np.argmax(preds)
+        prediction_result = int(np.argmax(preds))
+
+        rospy.loginfo("Traffic light: {0}".format(prediction_result))
+        # print(prediction_result.__class__)
 
         if prediction_result == 0:
-            rospy.loginfo('tl_classifier: Red traffic light detected.')
-            print("Red traffic light")
+            rospy.loginfo('tl_classifier: red traffic light detected')
+            # print("RED")
             return TrafficLight.RED
         elif prediction_result == 2:
             rospy.loginfo('tl_classifier: Green traffic light detected.')
+            # print("GREEN")
             return TrafficLight.GREEN
         else:
             rospy.loginfo('tl_classifier: Unknown traffic light detected')
+            # print("UNKNOWN")
             return TrafficLight.UNKNOWN
