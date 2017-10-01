@@ -25,8 +25,14 @@ import numpy as np
 STATE_COUNT_THRESHOLD = 3
 dl = lambda a, b: math.sqrt((a.x-b.x)**2 + (a.y-b.y)**2  + (a.z-b.z)**2)
 
-LIGHT_DETECT_DIST_MIN = 22 # m
+# Sim
+LIGHT_DETECT_DIST_MIN = 13 # m
 LIGHT_DETECT_DIST_MAX = 120 # m
+
+# Site
+# LIGHT_DETECT_DIST_MIN = 5 # m
+# LIGHT_DETECT_DIST_MAX = 25 # m
+
 
 class TLDetector(object):
     def __init__(self):
@@ -41,6 +47,8 @@ class TLDetector(object):
         self.lights = []
         self.nr = 0
         self.state = None
+
+        self.cv_image_test = None
 
 
         # It should be False for final submission, because we want to use provided transform
@@ -142,6 +150,11 @@ class TLDetector(object):
         else:
             self.upcoming_red_light_pub.publish(Int32(self.last_wp))
         self.state_count += 1
+
+        # Debug output
+        if self.cv_image_test is not None:
+            cv2.putText(self.cv_image_test, 'Red Light WP: {}'.format(self.last_wp), (50, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 4)
+            self.publish_image_test(self.cv_image_test)
 
     # Used for recording sim training data ONLY
     def image_sync(self, image_msg, pose_msg, lights_msg):
@@ -429,40 +442,46 @@ class TLDetector(object):
             lights_dists = [helper.wp_distance(car_wp, lwp, self.waypoints.waypoints) for lwp in lights_wp]
             closest_light = lights_dists.index(min(lights_dists))
 
-            rospy.loginfo('car_wp = {}'.format(car_wp))
-            rospy.loginfo('closest_light[{}] = {}, {}'.format(closest_light, self.lights[closest_light].state, lights_dists[closest_light]))
+            # rospy.loginfo('car_wp = {}'.format(car_wp))
+            # rospy.loginfo('closest_light[{}] = {}, {}'.format(closest_light, self.lights[closest_light].state, lights_dists[closest_light]))
+
 
             # light = lights_wp[closest_light]
             light_wp = lights_wp[closest_light]
             light = self.lights[closest_light]
 
+            rospy.loginfo('car_wp = {:5d}, light_wp = {:5d}, light_dist = {:>4.2f}'.format(car_wp, light_wp, lights_dists[closest_light]))
+
             # This we have only in simulator for testing
             state = self.lights[closest_light].state
-            rospy.loginfo('SIM: closest_light_wp = {}, state = {}'.format(light_wp, light.state))
+            # rospy.loginfo('SIM: closest_light_wp = {}, state = {}'.format(light_wp, light.state))
 
 
         # For debug output only
-        cv_image = self.bridge.imgmsg_to_cv2(self.camera_image, "bgr8")
+        self.cv_image_test = self.bridge.imgmsg_to_cv2(self.camera_image, "bgr8")
 
         if light:
             waypoints_num = len(self.waypoints.waypoints)
             light_dist = (light_wp - car_wp + waypoints_num) % waypoints_num
             light_dist_m = lights_dists[closest_light]
 
+            cv2.putText(self.cv_image_test, 'Light Dist: {:.2f} m'.format(light_dist_m), (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 4)
+
             # Look at the image and classify light
             if LIGHT_DETECT_DIST_MIN < light_dist_m < LIGHT_DETECT_DIST_MAX:
             	state = self.get_light_state(light)
-                rospy.loginfo('CLASSIFIER STATE: state = {}'.format(state))
+                # rospy.loginfo('CLASSIFIER STATE: state = {}'.format(state))
 
                 # Publish annotated image_test topic for debug
-                cv2.putText(cv_image, 'State: {}'.format(state), (100, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
-                self.publish_image_test(cv_image)
+                cv2.putText(self.cv_image_test, 'State: {}'.format(state), (50, 150), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 4)
+
+
 
                 return light_wp, state
 
 
         # Publish just image to image_test
-        self.publish_image_test(cv_image)
+        # self.publish_image_test(cv_image)
 
         # self.waypoints = None # don't know why this line is here [Pavlo]
         return -1, TrafficLight.UNKNOWN
