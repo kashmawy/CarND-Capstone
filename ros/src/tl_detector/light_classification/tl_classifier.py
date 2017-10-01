@@ -22,6 +22,7 @@ class TLClassifier(object):
         # self.model = load_model(fname)
         self.model.load_weights(fname)
         self.graph = tf.get_default_graph()
+        # self.predictions = {}
         # self.debug_img_counter = 1
 
     def get_classification(self, image):
@@ -36,8 +37,11 @@ class TLClassifier(object):
         """
         # save
 
+        # print(self.predictions)
+
         # self.debug_img_counter = self.debug_img_counter + 1
-        # cv2.imwrite('image{0}.png'.format(self.debug_img_counter), image)
+        # image_name = 'image{0}.png'.format(self.debug_img_counter)
+        # cv2.imwrite(image_name, image)
         image = image.astype(dtype=float)
         # print(image)
         rospy.loginfo("TLClassifier get_classification")
@@ -50,18 +54,21 @@ class TLClassifier(object):
             preds = self.model.predict(image)[0]
         prediction_result = int(np.argmax(preds))
 
-        rospy.loginfo("Traffic light: {0}".format(prediction_result))
+        # rospy.loginfo("Traffic light: {0}".format(prediction_result))
         # print(prediction_result.__class__)
 
         if prediction_result == 0:
             rospy.loginfo('tl_classifier: red traffic light detected')
             # print("RED")
+            # self.predictions[image_name] = 'red'
             return TrafficLight.RED
         elif prediction_result == 2:
             rospy.loginfo('tl_classifier: Green traffic light detected.')
             # print("GREEN")
+            # self.predictions[image_name] = 'green'
             return TrafficLight.GREEN
         else:
             rospy.loginfo('tl_classifier: Unknown traffic light detected')
             # print("UNKNOWN")
+            # self.predictions[image_name] = 'unknown'
             return TrafficLight.UNKNOWN
