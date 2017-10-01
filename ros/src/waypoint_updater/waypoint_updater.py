@@ -105,7 +105,7 @@ class WaypointUpdater(object):
         # TODO: Make the whole stopping in front of a stop line smooth
         # need to adjust distances where to stop based on current velocity and
         # find out correct params for this. [Pavlo]
-        rl_stop_line = 90
+        rl_stop_line = 55
 
         # Stop line waypoint (where speed = 0.0)
         rl_stop_line_wp = (self.red_light_wp - rl_stop_line + waypoints_num) % waypoints_num
