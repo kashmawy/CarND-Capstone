@@ -16,8 +16,9 @@ class TLClassifier(object):
     def __init__(self):
         rospy.loginfo("TLClassifier starting")
         K.set_image_dim_ordering('tf')
-        self.model = SqueezeNet(3, (IMAGE_HEIGHT, IMAGE_WIDTH, 3))
-        fname = os.path.join('light_classification', 'trained_model/challenge1.weights')
+        # self.model = SqueezeNet(3, (IMAGE_HEIGHT, IMAGE_WIDTH, 3))
+        fname = os.path.join('light_classification', 'trained_model/squeezeNet_224_224.05-0.00-1.00.hdf5')
+        self.model = load_model(fname)
         # self.model = load_model(fname)
         # self.model = load_model(fname)
         self.model.load_weights(fname)
