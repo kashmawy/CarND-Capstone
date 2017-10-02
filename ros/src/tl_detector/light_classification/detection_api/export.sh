@@ -1,9 +1,17 @@
 #!/bin/bash
 
-PIPELINE_CONFIG=./models/faster_rcnn_multi/faster_rcnn_resnet101_light_multi.config
-MODEL_DIR=./models/faster_rcnn_multi
-TRAIN_DIR=./models/faster_rcnn_multi/train
-CHECKPOINT_NUMBER=11293
+# PIPELINE_CONFIG=./models/faster_rcnn_multi_filtered/faster_rcnn_resnet101_light_multi_filtered.config
+# MODEL_DIR=./models/faster_rcnn_multi_filtered
+# TRAIN_DIR=./models/faster_rcnn_multi_filtered/train
+# CHECKPOINT_NUMBER=20000
+
+
+PIPELINE_CONFIG=./models/ssd_filtered/ssd_inception_v2_lights_filtered.config
+MODEL_DIR=./models/ssd_filtered
+TRAIN_DIR=./models/ssd_filtered/train
+CHECKPOINT_NUMBER=9598
+
+
 
 CHECKPOINT_PREFIX=${TRAIN_DIR}/model.ckpt-${CHECKPOINT_NUMBER}
 

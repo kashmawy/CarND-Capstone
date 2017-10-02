@@ -9,7 +9,12 @@
 
 # MODEL_DIR=./models/faster_rcnn_sim
 
-MODEL_DIR=./models/faster_rcnn_multi
+# MODEL_DIR=./models/faster_rcnn_multi
+
+# MODEL_DIR=./models/faster_rcnn_multi_filtered
+
+
+MODEL_DIR=./models/ssd_filtered
 
 
 echo Running tensorboard ...

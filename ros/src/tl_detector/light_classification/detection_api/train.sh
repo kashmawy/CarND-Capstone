@@ -19,9 +19,19 @@
 # TRAIN_DIR=./models/faster_rcnn_sim/train
 # EVAL_DIR=./models/faster_rcnn_sim/eval
 
-PIPELINE_CONFIG=./models/faster_rcnn_multi/faster_rcnn_resnet101_light_multi.config
-TRAIN_DIR=./models/faster_rcnn_multi/train
-EVAL_DIR=./models/faster_rcnn_multi/eval
+# PIPELINE_CONFIG=./models/faster_rcnn_multi/faster_rcnn_resnet101_light_multi.config
+# TRAIN_DIR=./models/faster_rcnn_multi/train
+# EVAL_DIR=./models/faster_rcnn_multi/eval
+
+
+# PIPELINE_CONFIG=./models/faster_rcnn_multi_filtered/faster_rcnn_resnet101_light_multi_filtered.config
+# TRAIN_DIR=./models/faster_rcnn_multi_filtered/train
+# EVAL_DIR=./models/faster_rcnn_multi_filtered/eval
+
+
+PIPELINE_CONFIG=./models/ssd_filtered/ssd_inception_v2_lights_filtered.config
+TRAIN_DIR=./models/ssd_filtered/train
+EVAL_DIR=./models/ssd_filtered/eval
 
 
 echo PIPELINE_CONFIG = ${PIPELINE_CONFIG}
