@@ -21,4 +21,5 @@ def splitfile(filename, directory, chunksize=chunksize, maxchunks=maxchunks):
             outfile.close()
             chunknum += 1
 
-splitfile('./models/ssd_filtered/frozen_9598/frozen_inference_graph.pb', './inference_models/ssd_filtered_sim/parts')
+# splitfile('./models/ssd_filtered/frozen_9598/frozen_inference_graph.pb', './inference_models/ssd_filtered_sim/parts')
+splitfile('./models/faster_rcnn_multi_filtered/frozen_20000/frozen_inference_graph.pb', './inference_models/faster_rcnn_multi_filtered/parts')

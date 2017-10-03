@@ -8,11 +8,15 @@ import rospy
 import cv2
 import os
 import tensorflow as tf
+import time
+from functools import partial
 
 CHUNK_SIZE = 1024
 
+THRESHOLD = 0.3
+
 class TLClassifierDetection(object):
-    def __init__(self, model_dir):
+    def __init__(self, model_dir, consensus = 1):
         rospy.loginfo("TLClassifier Detection starting")
         K.set_image_dim_ordering('tf')
 
@@ -24,14 +28,18 @@ class TLClassifierDetection(object):
         # self.graph = tf.get_default_graph()
 
         self.model_dir = model_dir
+        self.consensus = consensus
         self.predict_ready = False
 
         self.tf_session = None
         self.tf_graph = None
         self.config = None
 
+        self.labels = [0, TrafficLight.RED, TrafficLight.YELLOW, TrafficLight.GREEN, TrafficLight.UNKNOWN]
+
         # was model and weights made whole?
         if not os.path.exists(self.model_dir + '/frozen_inference_graph.pb'):
+            rospy.loginfo("restoring model ...")
             # if not - build it back up
             if os.path.exists(self.model_dir + '/parts'):
                 output = open(self.model_dir + '/frozen_inference_graph.pb', 'wb')
@@ -57,14 +65,16 @@ class TLClassifierDetection(object):
 
         # set up tensorflow and traffic light classifier
         if self.tf_session is None:
+            rospy.loginfo("starting session ...")
             # get the traffic light classifier
-            self.config = tf.ConfigProto(log_device_placement=True)
-            self.config.gpu_options.per_process_gpu_memory_fraction = 0.3  # don't hog all the VRAM!
-            self.config.operation_timeout_in_ms = 20000 # terminate anything that don't return in 50 seconds
+            self.config = tf.ConfigProto(log_device_placement=False)
+            self.config.gpu_options.per_process_gpu_memory_fraction = 0.7  # don't hog all the VRAM!
+            self.config.operation_timeout_in_ms = 50000 # terminate anything that don't return in 50 seconds
             self.tf_graph = tf.Graph()
             with self.tf_graph.as_default():
                 od_graph_def = tf.GraphDef()
-                with tf.gfile.GFile(self.model_path+'/frozen_inference_graph.pb', 'rb') as fid:
+                with tf.gfile.GFile(self.model_dir + '/frozen_inference_graph.pb', 'rb') as fid:
+                    rospy.loginfo("fid = {}".format(fid))
                     serialized_graph = fid.read()
                     od_graph_def.ParseFromString(serialized_graph)
                     tf.import_graph_def(od_graph_def, name='')
@@ -79,47 +89,49 @@ class TLClassifierDetection(object):
                     self.predict_ready = True
 
 
+        rospy.loginfo("session is ready ...")
+
         prediction = TrafficLight.UNKNOWN
+
+        t0 = time.time()
 
         if self.predict_ready:
             # Expand dimensions since the model expects images to have shape: [1, None, None, 3]
             image_expanded = np.expand_dims(image, axis=0)
 
-            # Actual detection
+            # Detection
             (scores, classes, num) = self.tf_session.run(
                 [self.detection_scores, self.detection_classes, self.num_detections],
-                feed_dict={self.image_tensor: image_np_expanded})
+                feed_dict={self.image_tensor: image_expanded})
 
-            # Visualization of the results of a detection.
             scores = np.squeeze(scores)
             classes = np.squeeze(classes).astype(np.int32)
 
-            # calculate prediction
-            c = 5
-            predict = self.clabels[c]
-            cc = classes[0]
-            confidence = scores[0]
-            if cc > 0 and cc < 4 and confidence is not None and confidence > THRESHOLD:
-                c = cc
-                predict = self.clabels[c]
+            # rospy.loginfo("analyzing results for: scores = {}, classes = {}".format(scores, classes))
+
+            # Counts classes
+            nums = np.zeros(5, dtype=np.uint8)
+            scores_sum = np.zeros(5)
+            for tlk in range(len(classes)):
+                c = self.labels[classes[tlk]]
+                s = scores[tlk]
+                if s > THRESHOLD:
+                    nums[c] += 1
+                    scores_sum[c] += s
+
+            rospy.loginfo("nums = {}, scores_sum = {}".format(nums, scores_sum))
+
+            maxn = np.max(nums)
+            if maxn >= self.consensus:
+                cands = (nums == maxn)
+                prediction = np.argmax(scores_sum * cands)
+
+            rospy.loginfo("prediction = {}, max_score = {}".format(prediction, scores[0]))
 
 
+        rospy.loginfo("prediction time = {:.4f} s".format(time.time() - t0))
 
-        # rospy.loginfo("TLClassifier get_classification")
-        image = cv2.resize(image, (224, 224))
-        image = img_to_array(image)
-        image /= 255.0
-        image = np.expand_dims(image, axis=0)
-        with self.graph.as_default():
-            preds = self.model.predict(image)[0]
-        prediction_result = np.argmax(preds)
+        return prediction
 
-        if prediction_result == 0:
-            # rospy.loginfo('tl_classifier: No traffic light detected.')
-            return TrafficLight.UNKNOWN
-        elif prediction_result == 1:
-            # rospy.loginfo('tl_classifier: Red traffic light detected.')
-            return TrafficLight.RED
-        else:
-            # rospy.loginfo('tl_classifier: Green traffic light detected')
-            return TrafficLight.GREEN
+
+            # closest_light = lights_dists.index(min(lights_dists))

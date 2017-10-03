@@ -9,6 +9,7 @@ from std_msgs.msg import Header
 from cv_bridge import CvBridge
 # from PIL import Image as PIL_Image
 from light_classification.tl_classifier import TLClassifier
+from light_classification.tl_classifier_detection import TLClassifierDetection
 import tf
 from tf import transformations as t
 import cv2
@@ -95,7 +96,9 @@ class TLDetector(object):
         self.image_test = rospy.Publisher('/image_test', Image, queue_size=1)
 
         self.bridge = CvBridge()
-        self.light_classifier = TLClassifier()
+        # self.light_classifier = TLClassifier()
+        # self.light_classifier = TLClassifierDetection('./light_classification/detection_api/inference_models/ssd_filtered_sim', consensus = 1) # ssd filtered model
+        self.light_classifier = TLClassifierDetection('./light_classification/detection_api/inference_models/faster_rcnn_multi_filtered', consensus = 1) # faster rcnn multi filtered model
         self.listener = tf.TransformListener()
 
         self.state = TrafficLight.UNKNOWN
@@ -474,9 +477,8 @@ class TLDetector(object):
                 # Publish annotated image_test topic for debug
                 cv2.putText(self.cv_image_test, 'State: {}'.format(state), (50, 150), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 4)
 
-
-
                 return light_wp, state
+
 
 
         # Publish just image to image_test
