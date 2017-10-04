@@ -1,4 +1,9 @@
 <?xml version="1.0"?>
 <launch>
-    <node pkg="tl_detector" type="tl_detector.py" name="tl_detector" output="screen" cwd="node"/>
+    <node pkg="tl_detector" type="tl_detector.py" name="tl_detector" output="screen" cwd="node">
+        <param name="light_detect_dist_min" value="13" />
+        <param name="light_detect_dist_max" value="120" />
+        <param name="model_dir" value="./light_classification/detection_api/inference_models/faster_rcnn_multi_filtered" />
+        <param name="consensus" value="1" />
+    </node>
 </launch>

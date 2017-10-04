@@ -27,12 +27,12 @@ STATE_COUNT_THRESHOLD = 3
 dl = lambda a, b: math.sqrt((a.x-b.x)**2 + (a.y-b.y)**2  + (a.z-b.z)**2)
 
 # Sim
-LIGHT_DETECT_DIST_MIN = 13 # m
-LIGHT_DETECT_DIST_MAX = 120 # m
+# LIGHT_DETECT_DIST_MIN = 13 # m
+# LIGHT_DETECT_DIST_MAX = 120 # m
 
 # Site
-# LIGHT_DETECT_DIST_MIN = 5 # m
-# LIGHT_DETECT_DIST_MAX = 25 # m
+# LIGHT_DETECT_DIST_MIN = 4 # m
+# LIGHT_DETECT_DIST_MAX = 26 # m
 
 
 class TLDetector(object):
@@ -54,6 +54,14 @@ class TLDetector(object):
         # It should be False for final submission, because we want to use provided transform
         # rather than our own from pose
         self.use_pose_transform = True # rospy.get_param('~use_pose_transform') # mps
+
+
+        self.light_detect_dist_min = rospy.get_param('~light_detect_dist_min', 4.) # m
+        self.light_detect_dist_max = rospy.get_param('~light_detect_dist_max', 26.) # m
+        rospy.loginfo('~light_detect_dist_min = {}'.format(self.light_detect_dist_min))
+        rospy.loginfo('~light_detect_dist_max = {}'.format(self.light_detect_dist_max))
+
+
 
 
         sub1 = rospy.Subscriber('/current_pose', PoseStamped, self.pose_cb, queue_size=1)
@@ -96,9 +104,17 @@ class TLDetector(object):
         self.image_test = rospy.Publisher('/image_test', Image, queue_size=1)
 
         self.bridge = CvBridge()
+
+        # Get models param from launch file
+        self.model_dir = rospy.get_param('~model_dir', './light_classification/detection_api/inference_models/faster_rcnn_multi_site') # path to the model
+        self.consensus = rospy.get_param('~consensus', 1) # min num of lights detected in one type
+
+        self.light_classifier = TLClassifierDetection(self.model_dir, consensus = self.consensus)
+
         # self.light_classifier = TLClassifier()
         # self.light_classifier = TLClassifierDetection('./light_classification/detection_api/inference_models/ssd_filtered_sim', consensus = 1) # ssd filtered model
-        self.light_classifier = TLClassifierDetection('./light_classification/detection_api/inference_models/faster_rcnn_multi_filtered', consensus = 1) # faster rcnn multi filtered model
+        # self.light_classifier = TLClassifierDetection('./light_classification/detection_api/inference_models/faster_rcnn_multi_filtered', consensus = 1) # faster rcnn multi filtered model
+
         self.listener = tf.TransformListener()
 
         self.state = TrafficLight.UNKNOWN
@@ -210,7 +226,7 @@ class TLDetector(object):
             light_dist_m = lights_dists[closest_light]
 
             # Save image
-            if LIGHT_DETECT_DIST_MIN < light_dist_m < LIGHT_DETECT_DIST_MAX:
+            if self.light_detect_dist_min < light_dist_m < self.light_detect_dist_max:
 
                 self.record_cnt += 1
 
@@ -470,7 +486,7 @@ class TLDetector(object):
             cv2.putText(self.cv_image_test, 'Light Dist: {:.2f} m'.format(light_dist_m), (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 4)
 
             # Look at the image and classify light
-            if LIGHT_DETECT_DIST_MIN < light_dist_m < LIGHT_DETECT_DIST_MAX:
+            if self.light_detect_dist_min < light_dist_m < self.light_detect_dist_max:
             	state = self.get_light_state(light)
                 # rospy.loginfo('CLASSIFIER STATE: state = {}'.format(state))
 

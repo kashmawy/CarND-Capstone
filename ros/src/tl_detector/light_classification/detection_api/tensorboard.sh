@@ -14,7 +14,11 @@
 # MODEL_DIR=./models/faster_rcnn_multi_filtered
 
 
-MODEL_DIR=./models/ssd_filtered
+# MODEL_DIR=./models/ssd_filtered
+
+
+MODEL_DIR=./models/faster_rcnn_multi_site
+
 
 
 echo Running tensorboard ...
