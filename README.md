@@ -94,12 +94,12 @@ The following are the approaches we tried:
 
 ### Team Members
 
-TODO(Pavlo, Mertin): Check the following e-mails.(Udacity registered e-mail)
+TODO(Pavlo): Check the following e-mails.(Udacity registered e-mail)
 
 The following are the team members:
 
 Khalid Ashmawy (khalid.ashmawy@gmail.com)  
 Pavlo Bashmakov (pavel.bashmakov@gmail.com)  
-Mertin Curban-gazi (mertin.curban@gmail.com)  
+Mertin Curban-gazi (mertin23@yahoo.com)  
 John Ryan (jtryan666@gmail.com)  
 Brian Chan (499938834@qq.com)  
