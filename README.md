@@ -99,6 +99,7 @@ TODO(all): Add udacity email addresses.
 The following are the team members:
 
 Khalid Ashmawy (khalid.ashmawy@gmail.com)
-Pavlo Bashmakov ()
-Mertin Curban-gazi ()
-John Ryan ()
+Pavlo Bashmakov (pavel.bashmakov@gmail.com)
+Mertin Curban-gazi (mertin.curban@gmail.com)
+John Ryan (cissp3@gmail.com)
+Brian Chan (499938834@qq.com)
