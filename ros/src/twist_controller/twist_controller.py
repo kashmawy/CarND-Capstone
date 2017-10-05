@@ -20,7 +20,7 @@ class Controller(object):
 
         # self.throttle_pid = pid.PID(kp = 0.6, ki = 0.004, kd = 0.2, mn=decel_limit, mx=accel_limit)
 
-        self.throttle_pid = pid.PID(kp = 4.0, ki = 0.15, kd = 0.7, mn=-0.8, mx=0.8)
+        self.throttle_pid = pid.PID(kp = 4.0, ki = 0.15, kd = 0.7, mn=-1.0, mx=1.0)
 
         self.throttle_filter = lowpass.LowPassFilter(tau = 0.0, ts = 1.0)
 
@@ -68,10 +68,20 @@ class Controller(object):
         # throttle = self.throttle_filter.filt(throttle)
         # rospy.loginfo('ctrl: throttle_filtered = {}'.format(throttle))
 
+        # Based on Slack discussions and knowledge from first submissions
+        # we've switched to the percentage values for brake & throttle
         if target_linear_velocity > current_linear_velocity:
-            throttle = max(min(20 * (target_linear_velocity - current_linear_velocity + 0.1) / target_linear_velocity, 0.9), -0.9)
+          base = target_linear_velocity
         else:
-            throttle = max(min(20 * (target_linear_velocity - current_linear_velocity - 0.2) / current_linear_velocity, 0.9), -0.9)
+          base = current_linear_velocity
+
+        # throttle = max(min(velocity_cte/base, 0.9), -0.9)
+        throttle = self.throttle_pid.step(velocity_cte/base, dt)
+
+        # if target_linear_velocity > current_linear_velocity:
+        #     throttle = max(min(20 * (target_linear_velocity - current_linear_velocity + 0.1) / target_linear_velocity, 0.9), -0.9)
+        # else:
+        #     throttle = max(min(20 * (target_linear_velocity - current_linear_velocity - 0.2) / current_linear_velocity, 0.9), -0.9)
             # throttle = -0.01
 
 
