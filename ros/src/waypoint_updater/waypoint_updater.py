@@ -70,11 +70,12 @@ class WaypointUpdater(object):
     def pose_cb(self, pose):
         # TODO: Implement
         # rospy.loginfo('pose cb!!!!')
-        # rospy.loginfo('Current pose = {}'.format(msg))
+        # rospy.loginfo('Current pose = {}'.format(pose))
         if self.waypoints is None:
             rospy.loginfo('None waypoints')
             return
 
+        log_out = (self.cnt % 20 == 0)
 
         # dists = [self.dist_pose_waypoint(pose, wp) for wp in self.waypoints]
         # closest_waypoint = dists.index(min(dists))
@@ -91,7 +92,9 @@ class WaypointUpdater(object):
 
         # Distance to red light in waypoints
         wps_to_light = (self.red_light_wp - wp_next + waypoints_num) % waypoints_num
-        dist_to_light = helper.wp_distance(wp_next, self.red_light_wp, self.waypoints)
+        if self.red_light_wp > 0:
+            dist_to_light = helper.wp_distance(wp_next, self.red_light_wp, self.waypoints)
+            dist_to_stop_line = dist_to_light - 20 # m
         # if wps_to_light < 0:
         #     wps_to_light += waypoints_num
 
@@ -104,7 +107,7 @@ class WaypointUpdater(object):
 
         # Distance to stop line
         rl_stop_line_nearest = 20
-        dist_to_stop_line = dist_to_light - 20 # m
+
 
         # Distance to red_light where to stop (in waypoints)
         # TODO: Make the whole stopping in front of a stop line smooth
@@ -119,37 +122,39 @@ class WaypointUpdater(object):
         uniform_speed = True
         if self.red_light_wp < 0:
             # There is no red light ahead, so just set up max speed
-            rospy.loginfo("no red light >>")
+            if log_out: rospy.loginfo("no red light >>")
             uniform_speed = True
             target_speed = self.target_speed
             self.slowing_down = False
         elif wps_to_light > LOOKAHEAD_WPS:
             # Red light is farther than number of points to return,
             # so again use max speed for all waypoints
-            rospy.loginfo("no red light is further than lookahead >>")
+            if log_out: rospy.loginfo("no red light is further than lookahead >>")
             uniform_speed = True
             target_speed = self.target_speed
             self.slowing_down = False
         elif dist_to_stop_line < 0:
             # We've already passed stop line
-            rospy.loginfo("missed stop line ({}) >>".format(dist_to_stop_line))
+            if log_out: rospy.loginfo("missed stop line ({}) >>".format(dist_to_stop_line))
             uniform_speed = True
             target_speed = self.target_speed
-        elif calc_acc(self.current_velocity, 0.0, dist_to_stop_line + 2.0) < MAX_DECEL:
+        elif helper.calc_acc(self.current_velocity, 0.0, dist_to_stop_line + 2.0) < MAX_DECEL:
             # We are moving to fast to make a full stop, just continue
-            rospy.loginfo("too fast to stop. all_decc = {} >>".format(calc_acc(self.current_velocity, 0.0, dist_to_stop_line + 2.0)))
+            if log_out: rospy.loginfo("too fast to stop. all_decc = {} >>".format(helper.calc_acc(self.current_velocity, 0.0, dist_to_stop_line + 2.0)))
             uniform_speed = True
             target_speed = self.target_speed
         else:
             # Red light is ahead, need to change speed gradually
+            if log_out: rospy.loginfo("red light ahead {:.2f} m, need to stop.".format(dist_to_light))
             uniform_speed = False
 
-        speed_list = ['{:.2f}'.format(w.twist.twist.linear.x) for w in final_waypoints]
-        rospy.loginfo("final_waypoints_start[{}] = [{}]".format(len(final_waypoints), ", ".join(speed_list)))
+        if log_out:
+            speed_list = ['{:.2f}'.format(w.twist.twist.linear.x) for w in final_waypoints]
+            rospy.loginfo("final_waypoints_start[{}] = [{}]".format(len(final_waypoints), ", ".join(speed_list)))
 
         if uniform_speed:
             # Just move forward from current velocity to the desired one
-            rospy.loginfo("just move forward")
+            if log_out: rospy.loginfo("just move forward")
             final_desired_speed = self.target_speed # or 0
             helper.move_forward_waypoints(
                 final_waypoints,
@@ -169,7 +174,7 @@ class WaypointUpdater(object):
 
             # 0 -- dist_to_stop_line --- dist_to_light --- la_wp
 
-            rospy.loginfo("decelerate and stop in {} m".format(dist_to_stop_line))
+            if log_out: rospy.loginfo("decelerate and stop in {} m".format(dist_to_stop_line))
             helper.decelerate_waypoints(
                 final_waypoints,
                 self.current_velocity,
@@ -226,7 +231,7 @@ class WaypointUpdater(object):
         '''
 
 
-        log_out = (self.cnt % 20 == 0)
+
 
         # rospy.loginfo("one point = {}".format(self.waypoints[0]))
 
@@ -242,9 +247,9 @@ class WaypointUpdater(object):
             rospy.loginfo('current_velocity = {}'.format(self.current_velocity))
             rospy.loginfo('wp_next = {}'.format(wp_next))
             rospy.loginfo('red_light_wp = {}'.format(self.red_light_wp))
-            rospy.loginfo("dist_to_stop_line = {} m".format(dist_to_stop_line))
-
-            rospy.loginfo("dist_to_light = {} m".format(dist_to_light))
+            if self.red_light_wp > 0:
+                rospy.loginfo("dist_to_stop_line = {} m".format(dist_to_stop_line))
+                rospy.loginfo("dist_to_light = {} m".format(dist_to_light))
             rospy.loginfo("lookahead_dist = {} m".format(helper.wp_distance(0, len(final_waypoints)-1, final_waypoints)))
             # rospy.loginfo('dist to zero = {}'.format(wps_to_light - decel_len))
             # rospy.loginfo('len wp = {}'.format(len(final_waypoints)))
@@ -271,12 +276,13 @@ class WaypointUpdater(object):
         # TODO: Implement
         self.waypoints = waypoints.waypoints
         # rospy.loginfo('received waypoints len = {}'.format(len(waypoints.waypoints)))
-        pass
+
 
     def traffic_cb(self, msg):
         # TODO: Callback for /traffic_waypoint message. Implement
         self.red_light_wp = int(msg.data)
-        pass
+        rospy.loginfo('received red_light_wp = {}'.format(self.red_light_wp))
+
 
     def obstacle_cb(self, msg):
         # TODO: Callback for /obstacle_waypoint message. We will implement it later

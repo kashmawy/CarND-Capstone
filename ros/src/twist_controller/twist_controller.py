@@ -18,7 +18,10 @@ class Controller(object):
         self.vehicle_mass = vehicle_mass
         self.wheel_radius = wheel_radius
 
-        self.throttle_pid = pid.PID(kp = 0.6, ki = 0.004, kd = 0.2, mn=decel_limit, mx=accel_limit)
+        # self.throttle_pid = pid.PID(kp = 0.6, ki = 0.004, kd = 0.2, mn=decel_limit, mx=accel_limit)
+
+        self.throttle_pid = pid.PID(kp = 4.0, ki = 0.15, kd = 0.7, mn=-0.8, mx=0.8)
+
         self.throttle_filter = lowpass.LowPassFilter(tau = 0.0, ts = 1.0)
 
         self.steer_pid = pid.PID(kp = 0.5, ki = 0.04, kd = 0.2, mn=-max_steer_angle, mx=max_steer_angle)
@@ -60,10 +63,16 @@ class Controller(object):
         # rospy.loginfo('ctrl: velocity_cte = {}, dt = {}'.format(velocity_cte, dt))
 
         # Throtle PID
-        throttle = self.throttle_pid.step(velocity_cte, dt)
+        # throttle = self.throttle_pid.step(velocity_cte, dt)
         # rospy.loginfo('ctrl: throttle = {}'.format(throttle))
-        throttle = self.throttle_filter.filt(throttle)
+        # throttle = self.throttle_filter.filt(throttle)
         # rospy.loginfo('ctrl: throttle_filtered = {}'.format(throttle))
+
+        if target_linear_velocity > current_linear_velocity:
+            throttle = max(min(20 * (target_linear_velocity - current_linear_velocity + 0.1) / target_linear_velocity, 0.9), -0.9)
+        else:
+            throttle = max(min(20 * (target_linear_velocity - current_linear_velocity - 0.2) / current_linear_velocity, 0.9), -0.9)
+            # throttle = -0.01
 
 
         # Steer PID
@@ -86,13 +95,15 @@ class Controller(object):
         else:
             # Calc brake torque as torque = Vmass * dec * wheel_radius
             # ref http://sciencing.com/calculate-brake-torque-6076252.html
-            brake = self.vehicle_mass * self.wheel_radius * (-1.0 * throttle) #  * self.decel_limit
+            # brake = self.vehicle_mass * self.wheel_radius * (-1.0 * throttle) #  * self.decel_limit
+            brake = -throttle
             throttle = 0.0
 
         # Stop still on red light :) - prevents slow movement near zero speed
         if target_linear_velocity < 0.1:
             throttle = 0.0
-            brake = self.vehicle_mass * self.wheel_radius * (-1.0 * self.decel_limit)
+            # brake = self.vehicle_mass * self.wheel_radius * (-1.0 * self.decel_limit)
+            brake = -0.01
 
         # Return throttle, brake, steer
         return throttle, brake, steer

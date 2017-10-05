@@ -142,12 +142,12 @@ def clone_waypoint(waypoint):
   w.pose.pose.orientation.y = waypoint.pose.pose.orientation.y
   w.pose.pose.orientation.z = waypoint.pose.pose.orientation.z
   w.pose.pose.orientation.w = waypoint.pose.pose.orientation.w
-  w.twist.twist.linear.x = 0.
-  w.twist.twist.linear.y = 0.
-  w.twist.twist.linear.z = 0.
-  w.twist.twist.angular.x = 0.
-  w.twist.twist.angular.y = 0.
-  w.twist.twist.angular.z = 0.
+  w.twist.twist.linear.x = waypoint.twist.twist.linear.x
+  w.twist.twist.linear.y = waypoint.twist.twist.linear.y
+  w.twist.twist.linear.z = waypoint.twist.twist.linear.z
+  w.twist.twist.angular.x = waypoint.twist.twist.angular.x
+  w.twist.twist.angular.y = waypoint.twist.twist.angular.y
+  w.twist.twist.angular.z = waypoint.twist.twist.angular.z
   return w
 
 
@@ -157,7 +157,7 @@ def clone_waypoints(waypoints, start = 0, num = None):
     num = wlen
   new_waypoints = []
   idx = start
-  for i in range(len(num)):
+  for i in range(num):
     wid = (start + i) % wlen
     new_waypoints.append(clone_waypoint(waypoints[wid]))
   return new_waypoints
@@ -173,7 +173,9 @@ def move_forward_waypoints(
     final_desired_speed = 0.0,
     max_acceleration = 1.0):
 
-  final_waypoints[0].twist.twist.linear.x = current_velocity
+  d = 1.0 * dl(final_waypoints[0].pose.pose.position, final_waypoints[1].pose.pose.position)
+
+  final_waypoints[0].twist.twist.linear.x = math.sqrt(2 * max_acceleration * d + current_velocity * current_velocity) # current_velocity
   for i in range(len(final_waypoints) - 1):
 
     w_prev = final_waypoints[i]
@@ -187,9 +189,9 @@ def move_forward_waypoints(
 
     dist = dl(w_prev.pose.pose.position, w.pose.pose.position)
 
-    max_delta_v = math.sqrt(2 * max_acceleration * dist)
+    max_v = math.sqrt(2 * max_acceleration * dist + v_prev * v_prev)
 
-    w.twist.twist.linear.x = min(max(v_prev + max_delta_v, 0), max_speed_cap)
+    w.twist.twist.linear.x = min(max(max_v, 0), max_speed_cap)
 
   # TODO: Check return value
 
