@@ -211,7 +211,16 @@ def decelerate_waypoints(
   if all_dec < max_deceleration:
     all_dec = max_deceleration
 
-  final_waypoints[0].twist.twist.linear.x = current_velocity
+  d0 = dl(final_waypoints[0].pose.pose.position, final_waypoints[1].pose.pose.position)
+
+
+  
+  final_waypoints[0].twist.twist.linear.x = 2 * all_dec * d0 + current_velocity * current_velocity
+  if final_waypoints[0].twist.twist.linear.x > 0.0:
+      final_waypoints[0].twist.twist.linear.x = math.sqrt(final_waypoints[0].twist.twist.linear.x)
+  else:
+      final_waypoints[0].twist.twist.linear.x = 0
+
 
   for i in range(len(final_waypoints) - 1):
     w_prev = final_waypoints[i]
