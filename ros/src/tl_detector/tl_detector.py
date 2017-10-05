@@ -47,6 +47,7 @@ class TLDetector(object):
         self.camera_image_prev_seq = None
         self.lights = []
         self.nr = 0
+        self.state = None
 
         self.cv_image_test = None
 
@@ -123,6 +124,7 @@ class TLDetector(object):
         self.state_count = 0
 
         self.record_cnt = 0
+        self.sim_state = 5
 
 
 
@@ -148,7 +150,7 @@ class TLDetector(object):
         self.camera_image = image_msg
         self.pose = pose_msg
 
-        light_wp, state = self.process_traffic_lights()
+        light_wp, state = self.process_traffic_lights(image_msg, pose_msg)
 
 
         '''
@@ -173,6 +175,14 @@ class TLDetector(object):
         if self.cv_image_test is not None:
             cv2.putText(self.cv_image_test, 'Red Light WP: {}'.format(self.last_wp), (50, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 4)
             self.publish_image_test(self.cv_image_test)
+
+            # save image test to folder
+            class_folder = os.path.join('.', 'output_images', self.record_name, 'class')
+            if not os.path.exists(class_folder):
+                os.makedirs(class_folder)
+            class_img_fname = os.path.join(class_folder, 'classifier{}_{}_{}.jpg'.format(self.nr, self.sim_state, state))
+            cv2.imwrite(class_img_fname, self.cv_image_test)
+            self.nr = self.nr + 1
 
     # Used for recording sim training data ONLY
     def image_sync(self, image_msg, pose_msg, lights_msg):
@@ -437,7 +447,7 @@ class TLDetector(object):
         # Get Classification
         return self.light_classifier.get_classification(cv_image)
 
-    def process_traffic_lights(self):
+    def process_traffic_lights(self, image, pose):
         """Finds closest visible traffic light, if one exists, and determines its
             location and color
 
@@ -450,11 +460,14 @@ class TLDetector(object):
         light_wp = -1
         light_positions = self.config['stop_line_positions']
 
+        # image = self.camera_image
+        # pose = self.pose
+
 
         # Select the closest waypoint from lights array which was received from /vehicle/traffic_lights topic
         if (self.lights and self.waypoints):
 
-            car_wp = helper.next_waypoint_idx(self.pose, self.waypoints.waypoints)
+            car_wp = helper.next_waypoint_idx(pose, self.waypoints.waypoints)
 
             lights_wp = [helper.closest_waypoint_idx(l.pose, self.waypoints.waypoints) for l in self.lights]
             lights_dists = [helper.wp_distance(car_wp, lwp, self.waypoints.waypoints) for lwp in lights_wp]
@@ -472,11 +485,12 @@ class TLDetector(object):
 
             # This we have only in simulator for testing
             state = self.lights[closest_light].state
+            self.sim_state = state
             # rospy.loginfo('SIM: closest_light_wp = {}, state = {}'.format(light_wp, light.state))
 
 
         # For debug output only
-        self.cv_image_test = self.bridge.imgmsg_to_cv2(self.camera_image, "bgr8")
+        self.cv_image_test = self.bridge.imgmsg_to_cv2(image, "bgr8")
 
         if light:
             waypoints_num = len(self.waypoints.waypoints)
