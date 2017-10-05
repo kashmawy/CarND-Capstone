@@ -54,3 +54,51 @@ cd CarND-Capstone/ros
 roslaunch launch/site.launch
 ```
 5. Confirm that traffic light detection works on real life images
+
+### Architecture
+
+TODO(khalid and pavlo): Add more info.
+
+### Components
+
+The following are the main components of the project:
+
+1. Perception: The perception component can be found under tl_detector and is responsible for classifying if the vehicle has a red traffic light or green traffic light ahead of it.
+
+2. Planning: The planning component can be found under waypoint_updater and is responsible for creating a list of waypoints with an associated target velocity based on the perception component.
+
+3. Control: The control component can be found under twist_controller and is responsible for the throttle, brake and steering based on the planning component.
+
+TODO(khalid and pavlo): Add more info
+
+### Clasffication
+
+We tried multiple approaches for classification and then we finally settled on one based on the results.
+
+The following are the approaches we tried:
+
+1. VGG16 with ImageNet weights and then finetuning
+
+    We started with VGG16 with ImageNet weights and then we added one extra fully connected layer and finetuned it with both simulator images and site images.
+    The main problem with this approach is that inference speed was very slow.
+    TODO(khalid): Add more info
+
+2. SqueezeNet that was trained on Nexar and then finetuning
+
+    We started with SqueezeNet that was trained on Nexar dataset and then we further finetuned it with the simulator images
+    TODO(khalid): Add more info
+
+3. Tensorflow APIs and then finetuning
+
+    TODO(Pavlo): Add more info
+
+### Team Members
+
+TODO(all): Add udacity email addresses.
+
+The following are the team members:
+
+Khalid Ashmawy (khalid.ashmawy@gmail.com)
+Pavlo Bashmakov ()
+Mertin Curban-gazi ()
+John Ryan ()
