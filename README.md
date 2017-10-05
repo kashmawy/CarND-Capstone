@@ -64,6 +64,11 @@ TODO(khalid and pavlo): Add more info.
 The following are the main components of the project:
 
 1. Perception: The perception component can be found under tl_detector and is responsible for classifying if the vehicle has a red traffic light or green traffic light ahead of it.
+TL Detector subscribes to the images captured from the camera mounted on the vehicle and whenever the traffic light is within a certain distance, then it starts passing the image to the classifier for classification.
+The classifier classifies the image into either traffic light with red lights, green lights or yellow lights.
+The check for the traffic light being within a certain distance is done by checking against the YAML file which contains the positions of the traffic lights.
+
+TODO(kash): Add how is this used afterwards
 
 2. Planning: The planning component can be found under waypoint_updater and is responsible for creating a list of waypoints with an associated target velocity based on the perception component.
 
@@ -71,7 +76,7 @@ The following are the main components of the project:
 
 TODO(khalid and pavlo): Add more info
 
-### Clasffication
+### Classification
 
 We tried multiple approaches for classification and then we finally settled on one based on the results.
 
@@ -80,21 +85,21 @@ The following are the approaches we tried:
 1. VGG16 with ImageNet weights and then finetuning
 
     We started with VGG16 with ImageNet weights and then we added one extra fully connected layer and finetuned it with both simulator images and site images.
-    The main problem with this approach is that inference speed was very slow.
-    TODO(khalid): Add more info
+    There were advantages and disadvantages to this approach. This approach gave good predictions with accuracy higher than 90%. However inference speed was very slow.
+
 
 2. SqueezeNet that was trained on Nexar and then finetuning
 
-    We started with SqueezeNet that was trained on Nexar dataset and then we further finetuned it with the simulator images
-    TODO(khalid): Add more info
+    We started with SqueezeNet that was trained on Nexar dataset and then we further finetuned it with the simulator images.
+    SqueezeNet was much more faster than VGG16 and had very high accuracy rate, over 90% and performed much better the the first approach.
+    Being originally trained on Nexar dataset as opposed to ImageNet must have contributed to that given that Nexar dataset are mainly traffic lights as opposed to ImageNet.
+    However initially this model was not performing well on simulator images, only on site images. After fine tuning the model, the model started to perform much better on simulator images.
 
 3. Tensorflow APIs and then finetuning
 
     TODO(Pavlo): Add more info
 
 ### Team Members
-
-TODO(Pavlo): Check the following e-mails.(Udacity registered e-mail)
 
 The following are the team members:
 
