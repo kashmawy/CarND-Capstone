@@ -3,6 +3,7 @@ from tf import transformations as t
 import math
 import rospy
 import numpy as np
+from styx_msgs.msg import TrafficLightArray, TrafficLight, Lane, Waypoint
 
 dl = lambda a, b: math.sqrt((a.x-b.x)**2 + (a.y-b.y)**2  + (a.z-b.z)**2)
 
@@ -130,3 +131,97 @@ def get_inverse_trans_rot(pose):
     # transT = translation
     # rotT = quaternion
     return translation, quaternion
+
+
+def clone_waypoint(waypoint):
+  w = Waypoint()
+  w.pose.pose.position.x = waypoint.pose.pose.position.x
+  w.pose.pose.position.y = waypoint.pose.pose.position.y
+  w.pose.pose.position.z = waypoint.pose.pose.position.z
+  w.pose.pose.orientation.x = waypoint.pose.pose.orientation.x
+  w.pose.pose.orientation.y = waypoint.pose.pose.orientation.y
+  w.pose.pose.orientation.z = waypoint.pose.pose.orientation.z
+  w.pose.pose.orientation.w = waypoint.pose.pose.orientation.w
+  w.twist.twist.linear.x = 0.
+  w.twist.twist.linear.y = 0.
+  w.twist.twist.linear.z = 0.
+  w.twist.twist.angular.x = 0.
+  w.twist.twist.angular.y = 0.
+  w.twist.twist.angular.z = 0.
+  return w
+
+
+def clone_waypoints(waypoints, start = 0, num = None):
+  wlen = len(waypoints)
+  if num is None or wlen < num:
+    num = wlen
+  new_waypoints = []
+  idx = start
+  for i in range(len(num)):
+    wid = (start + i) % wlen
+    new_waypoints.append(clone_waypoint(waypoints[wid]))
+  return new_waypoints
+
+def calc_acc(v1, v2, dist):
+  # if dist < 1e-06:
+  #   return 0
+  return (v2*v2 - v1*v1) / (2 * dist)
+
+def move_forward_waypoints(
+    final_waypoints,
+    current_velocity,
+    final_desired_speed = 0.0,
+    max_acceleration = 1.0):
+
+  final_waypoints[0].twist.twist.linear.x = current_velocity
+  for i in range(len(final_waypoints) - 1):
+
+    w_prev = final_waypoints[i]
+    v_prev = w_prev.twist.twist.linear.x
+    w = final_waypoints[i+1]
+
+    if final_desired_speed > 0.0:
+      max_speed_cap = final_desired_speed
+    else:
+      max_speed_cap = w.twist.twist.linear.x
+
+    dist = dl(w_prev.pose.pose.position, w.pose.pose.position)
+
+    max_delta_v = math.sqrt(2 * max_acceleration * dist)
+
+    w.twist.twist.linear.x = min(max(v_prev + max_delta_v, 0), max_speed_cap)
+
+  # TODO: Check return value
+
+
+def decelerate_waypoints(
+    final_waypoints,
+    current_velocity,
+    stop_distance = None,
+    max_deceleration = -1.0):
+
+
+  if stop_distance is None:
+    stop_distance = wp_distance(0, len(final_waypoints) - 1, final_waypoints)
+
+  all_dec = calc_acc(current_velocity, 0.0, stop_distance)
+
+  if all_dec < max_deceleration:
+    all_dec = max_deceleration
+
+  final_waypoints[0].twist.twist.linear.x = current_velocity
+
+  for i in range(len(final_waypoints) - 1):
+    w_prev = final_waypoints[i]
+    v_prev = w_prev.twist.twist.linear.x
+    w = final_waypoints[i+1]
+
+    dist = dl(w_prev.pose.pose.position, w.pose.pose.position)
+
+    v_all_dec = 2 * all_dec * dist + v_prev * v_prev
+    if v_all_dec > 0.0:
+      v_all_dec = math.sqrt(v_all_dec)
+    else:
+      v_all_dec = 0.0
+
+    w.twist.twist.linear.x = v_all_dec
