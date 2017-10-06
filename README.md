@@ -1,3 +1,13 @@
+### Team Members
+
+The following are the team members:
+
+Khalid Ashmawy (khalid.ashmawy@gmail.com)
+Pavlo Bashmakov (pavel.bashmakov@gmail.com)
+Mertin Curban-gazi (mertin23@yahoo.com)
+John Ryan (jtryan666@gmail.com)
+Brian Chan (499938834@qq.com)
+
 ### Architecture
 
 The following diagram shows the architecture of the project:
@@ -117,13 +127,3 @@ cd CarND-Capstone/ros
 roslaunch launch/site.launch
 ```
 5. Confirm that traffic light detection works on real life images
-
-### Team Members
-
-The following are the team members:
-
-Khalid Ashmawy (khalid.ashmawy@gmail.com)  
-Pavlo Bashmakov (pavel.bashmakov@gmail.com)  
-Mertin Curban-gazi (mertin23@yahoo.com)  
-John Ryan (jtryan666@gmail.com)  
-Brian Chan (499938834@qq.com)  
