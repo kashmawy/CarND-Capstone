@@ -2,11 +2,11 @@
 
 The following are the team members:
 
-Khalid Ashmawy (khalid.ashmawy@gmail.com)
-Pavlo Bashmakov (pavel.bashmakov@gmail.com)
-Mertin Curban-gazi (mertin23@yahoo.com)
-John Ryan (jtryan666@gmail.com)
-Brian Chan (499938834@qq.com)
+1. Khalid Ashmawy (khalid.ashmawy@gmail.com)
+2. Pavlo Bashmakov (pavel.bashmakov@gmail.com)
+3. Mertin Curban-gazi (mertin23@yahoo.com)
+4. John Ryan (jtryan666@gmail.com)
+5. Brian Chan (499938834@qq.com)
 
 ### Architecture
 
