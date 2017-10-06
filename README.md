@@ -1,5 +1,9 @@
 ### Team Members
 
+[//]: # (Image References)
+[image_test]: ./imgs/image_test.png "Lane Estimation"
+
+
 The following are the team members of selfdriven.tech team:
 
 1. Khalid Ashmawy (khalid.ashmawy@gmail.com)
@@ -71,7 +75,30 @@ The following are the approaches we tried:
 
 3. Tensorflow APIs and then finetuning
 
-    TODO(Pavlo): Add more info
+    Finally we've used Tensorflow Object Detection API with a fine tuned model (__faster_rcnn_resnet101_coco__) on sim (collected from simulator) and site data (provided in udacity rosbag) separately.
+
+    Video with recognitions on simulator images (new test set that wasn't used during the training):
+
+    Speed of inference is: 0.04 - 0.09 s with Nvidia GPU 1080 Ti.
+
+    Cropping is not used.
+
+    Video of traffic light detector testing:
+
+    [![Recognition Result](https://img.youtube.com/vi/kSMpURiAUGs/0.jpg)](https://youtu.be/kSMpURiAUGs)
+
+    We also publish `/image_test` topic that is useful to see the detection in real life during sim/site tests:
+
+    ![Traffic Light Detector][image_test]
+
+
+## Run on Carla
+
+We've tried to made all necessary param changes inside relevant launch files, so the whole sequence will be launched by just:
+```
+roslaunch launch/site.launch
+```
+
 
 
 ### Installation
