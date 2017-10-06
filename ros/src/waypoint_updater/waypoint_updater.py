@@ -28,9 +28,9 @@ TODO (for Yousuf and Aaron): Stopline location for each traffic light.
 LOOKAHEAD_WPS = 200 # Number of waypoints we will publish. You can change this number
 ONE_MPH = 0.44704 # mph to mps
 # TARGET_SPEED = 8.0 * ONE_MPH
-MAX_DECEL = -5.0 # m/s/s
-MAX_ACC = 1.0 # m/s/s
-STOP_LINE_DIST = 20 # SIM
+# MAX_DECEL = -5.0 # m/s/s
+# MAX_ACC = 1.0 # m/s/s
+# STOP_LINE_DIST = 20 # SIM
 
 dl = lambda a, b: math.sqrt((a.x-b.x)**2 + (a.y-b.y)**2  + (a.z-b.z)**2)
 
@@ -55,7 +55,7 @@ class WaypointUpdater(object):
 
         self.target_speed = rospy.get_param('~target_speed') / 3.6 # mps
 
-        self.stop_line_dist = rospy.get_param('~stop_line_dist', 8.) # default for site
+        self.stop_line_dist = rospy.get_param('~stop_line_dist', 6.) # default for site
         self.max_acc = rospy.get_param('~max_acc', 1.) # default for site
         self.max_decel = rospy.get_param('~max_dec', -1.) # default for site
 
@@ -105,24 +105,24 @@ class WaypointUpdater(object):
         #     wps_to_light += waypoints_num
 
         # Final waypoint of our path
-        la_wp = (wp_next + LOOKAHEAD_WPS) % waypoints_num
+        # la_wp = (wp_next + LOOKAHEAD_WPS) % waypoints_num
 
         # Site: if we have less waypoints than in the whole track
-        if LOOKAHEAD_WPS > waypoints_num:
-            la_wp = waypoints_num - 1
+        # if LOOKAHEAD_WPS > waypoints_num:
+            # la_wp = waypoints_num - 1
 
         # Distance to stop line
-        rl_stop_line_nearest = 20
+        # rl_stop_line_nearest = 20
 
 
         # Distance to red_light where to stop (in waypoints)
         # TODO: Make the whole stopping in front of a stop line smooth
         # need to adjust distances where to stop based on current velocity and
         # find out correct params for this. [Pavlo]
-        rl_stop_line = 55
+        # rl_stop_line = 55
 
         # Stop line waypoint (where speed = 0.0)
-        rl_stop_line_wp = (self.red_light_wp - rl_stop_line + waypoints_num) % waypoints_num
+        # rl_stop_line_wp = (self.red_light_wp - rl_stop_line + waypoints_num) % waypoints_num
 
 
         uniform_speed = True
@@ -144,7 +144,8 @@ class WaypointUpdater(object):
             if log_out: rospy.loginfo("missed stop line ({}) >>".format(dist_to_stop_line))
             uniform_speed = True
             target_speed = self.target_speed
-        elif helper.calc_acc(self.current_velocity, 0.0, dist_to_stop_line + 2.0) < self.max_decel:
+            self.slowing_down = False
+        elif helper.calc_acc(self.current_velocity, 0.0, dist_to_stop_line + 2.0) < self.max_decel and not self.slowing_down:
             # We are moving to fast to make a full stop, just continue
             if log_out: rospy.loginfo("too fast to stop. all_decc = {}, max_decel = {} >>".format(helper.calc_acc(self.current_velocity, 0.0, dist_to_stop_line + 2.0), self.max_decel))
             uniform_speed = True
@@ -153,6 +154,7 @@ class WaypointUpdater(object):
             # Red light is ahead, need to change speed gradually
             if log_out: rospy.loginfo("red light ahead {:.2f} m, need to stop.".format(dist_to_light))
             uniform_speed = False
+            self.slowing_down = True
 
         # if log_out:
         #     speed_list = ['{:.2f}'.format(w.twist.twist.linear.x) for w in final_waypoints]

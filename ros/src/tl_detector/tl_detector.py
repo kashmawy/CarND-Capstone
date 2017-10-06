@@ -177,12 +177,14 @@ class TLDetector(object):
             self.publish_image_test(self.cv_image_test)
 
             # save image test to folder
+            '''
             class_folder = os.path.join('.', 'output_images', self.record_name, 'class')
             if not os.path.exists(class_folder):
                 os.makedirs(class_folder)
             class_img_fname = os.path.join(class_folder, 'classifier{}_{}_{}.jpg'.format(self.nr, self.sim_state, state))
             cv2.imwrite(class_img_fname, self.cv_image_test)
             self.nr = self.nr + 1
+            '''
 
     # Used for recording sim training data ONLY
     def image_sync(self, image_msg, pose_msg, lights_msg):
@@ -336,6 +338,7 @@ class TLDetector(object):
 
         return distanceList.index(min(distanceList))
 
+
     def project_to_image_plane(self, point_in_world, offsetX, offsetY, pose = None):
         fx = self.config['camera_info']['focal_length_x']
         fy = self.config['camera_info']['focal_length_y']
@@ -434,7 +437,6 @@ class TLDetector(object):
         # Publish to debug topic
         self.publish_image_test(output_crop)
 
-
         # save cropped image
         crop_folder = os.path.join('.', 'output_images', self.record_name, 'crop')
         if not os.path.exists(crop_folder):
@@ -459,9 +461,6 @@ class TLDetector(object):
         light = None
         light_wp = -1
         light_positions = self.config['stop_line_positions']
-
-        # image = self.camera_image
-        # pose = self.pose
 
 
         # Select the closest waypoint from lights array which was received from /vehicle/traffic_lights topic

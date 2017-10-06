@@ -120,15 +120,26 @@ class Controller(object):
         else:
             # Calc brake torque as torque = Vmass * dec * wheel_radius
             # ref http://sciencing.com/calculate-brake-torque-6076252.html
-            brake = self.vehicle_mass * self.wheel_radius * (-1.0 * throttle) #  * self.decel_limit
+
+            if abs(throttle) < 0.2:
+                throttle *= 2
+
+            # Stop still on red light :) - prevents slow movement near zero speed
+            if target_linear_velocity < 0.2:
+                throttle = -1.0
+
+
+            brake = abs(self.vehicle_mass * self.wheel_radius * (-1.0 * throttle)) #  * self.decel_limit throttle
             # brake = -throttle
             throttle = 0.0
 
+        '''
         # Stop still on red light :) - prevents slow movement near zero speed
-        if target_linear_velocity < 0.1:
+        if target_linear_velocity < 0.2:
             throttle = 0.0
-            # brake = self.vehicle_mass * self.wheel_radius * (-1.0 * self.decel_limit)
-            brake = -0.01
+            brake = abs(self.vehicle_mass * self.wheel_radius * 1.0)
+            # brake = -0.01
+        '''
 
         # Return throttle, brake, steer
         return throttle, brake, steer
