@@ -148,9 +148,9 @@ class WaypointUpdater(object):
             if log_out: rospy.loginfo("red light ahead {:.2f} m, need to stop.".format(dist_to_light))
             uniform_speed = False
 
-        if log_out:
-            speed_list = ['{:.2f}'.format(w.twist.twist.linear.x) for w in final_waypoints]
-            rospy.loginfo("final_waypoints_start[{}] = [{}]".format(len(final_waypoints), ", ".join(speed_list)))
+        # if log_out:
+        #     speed_list = ['{:.2f}'.format(w.twist.twist.linear.x) for w in final_waypoints]
+        #     rospy.loginfo("final_waypoints_start[{}] = [{}]".format(len(final_waypoints), ", ".join(speed_list)))
 
         if uniform_speed:
             # Just move forward from current velocity to the desired one
@@ -175,7 +175,7 @@ class WaypointUpdater(object):
             # 0 -- dist_to_stop_line --- dist_to_light --- la_wp
 
             if log_out: rospy.loginfo("decelerate and stop in {} m".format(dist_to_stop_line))
-            helper.decelerate_waypoints(
+            helper.decelerate_waypoints2(
                 final_waypoints,
                 self.current_velocity,
                 stop_distance = dist_to_stop_line,
@@ -244,7 +244,7 @@ class WaypointUpdater(object):
             # rospy.loginfo("next wp x, y   = {}, {}".format(final_waypoints[0].pose.pose.position.x,
             #     final_waypoints[0].pose.pose.position.y))
             # rospy.loginfo("next wp linear.x   = {}".format(final_waypoints[0].twist.twist.linear.x))
-            rospy.loginfo('current_velocity = {}'.format(self.current_velocity))
+            rospy.loginfo('current_velocity = {:.4f}'.format(self.current_velocity))
             rospy.loginfo('wp_next = {}'.format(wp_next))
             rospy.loginfo('red_light_wp = {}'.format(self.red_light_wp))
             if self.red_light_wp > 0:

@@ -20,11 +20,11 @@ class Controller(object):
 
         # self.throttle_pid = pid.PID(kp = 0.6, ki = 0.004, kd = 0.2, mn=decel_limit, mx=accel_limit)
 
-        self.throttle_pid = pid.PID(kp = 4.0, ki = 0.15, kd = 0.7, mn=-1.0, mx=1.0)
+        self.throttle_pid = pid.PID(kp = 40.0, ki = 0.0, kd = 0.7, mn=-1.0, mx=1.0)
 
         self.throttle_filter = lowpass.LowPassFilter(tau = 0.0, ts = 1.0)
 
-        self.steer_pid = pid.PID(kp = 0.5, ki = 0.04, kd = 0.2, mn=-max_steer_angle, mx=max_steer_angle)
+        self.steer_pid = pid.PID(kp = 0.5, ki = 0.0, kd = 0.2, mn=-max_steer_angle, mx=max_steer_angle) # ki = 0.04
         self.steer_filter = lowpass.LowPassFilter(tau = 0.0, ts = 1.0)
 
         self.yaw_controller = YawController(wheel_base, steer_ratio, min_speed, max_lat_accel, max_steer_angle)
@@ -72,11 +72,22 @@ class Controller(object):
         # we've switched to the percentage values for brake & throttle
         if target_linear_velocity > current_linear_velocity:
           base = target_linear_velocity
+          if current_linear_velocity > 0.1:
+            velocity_cte = velocity_cte + 0.1
         else:
           base = current_linear_velocity
+          if current_linear_velocity > 0.1:
+            velocity_cte = velocity_cte - 0.1
+
+        velocity_cte = velocity_cte / base
 
         # throttle = max(min(velocity_cte/base, 0.9), -0.9)
-        throttle = self.throttle_pid.step(velocity_cte/base, dt)
+
+        throttle = self.throttle_pid.step(velocity_cte, dt)
+
+        rospy.loginfo('velocity_cte = {:.4f}, dt = {:.4f}'.format(velocity_cte, dt))
+        rospy.loginfo('Pc = {:.4f}, Pd = {:.4f}, Pi = {:.4f}'.format(self.throttle_pid.pc, self.throttle_pid.pd, self.throttle_pid.pi))
+
 
         # if target_linear_velocity > current_linear_velocity:
         #     throttle = max(min(20 * (target_linear_velocity - current_linear_velocity + 0.1) / target_linear_velocity, 0.9), -0.9)
@@ -105,8 +116,8 @@ class Controller(object):
         else:
             # Calc brake torque as torque = Vmass * dec * wheel_radius
             # ref http://sciencing.com/calculate-brake-torque-6076252.html
-            # brake = self.vehicle_mass * self.wheel_radius * (-1.0 * throttle) #  * self.decel_limit
-            brake = -throttle
+            brake = self.vehicle_mass * self.wheel_radius * (-1.0 * throttle) #  * self.decel_limit
+            # brake = -throttle
             throttle = 0.0
 
         # Stop still on red light :) - prevents slow movement near zero speed
