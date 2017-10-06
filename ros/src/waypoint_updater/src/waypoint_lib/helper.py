@@ -167,20 +167,21 @@ def calc_acc(v1, v2, dist):
   #   return 0
   return (v2*v2 - v1*v1) / (2 * dist)
 
+
 def move_forward_waypoints(
     final_waypoints,
     current_velocity,
-    final_desired_speed = 0.0,
+    max_desired_speed = 0.0,
     max_acceleration = 1.0):
 
   d = 1.0 * dl(final_waypoints[0].pose.pose.position, final_waypoints[1].pose.pose.position)
 
-  if final_desired_speed > 0.0:
-    max_speed_cap0 = final_desired_speed
+  if max_desired_speed > 0.0:
+    max_speed_cap0 = max_desired_speed
   else:
     max_speed_cap0 = final_waypoints[0].twist.twist.linear.x
 
-  final_waypoints[0].twist.twist.linear.x = math.sqrt(2 * max_acceleration * d + current_velocity * current_velocity) # current_velocity
+  final_waypoints[0].twist.twist.linear.x = math.sqrt(2. * max_acceleration * d * 10. + current_velocity * current_velocity) # current_velocity
   final_waypoints[0].twist.twist.linear.x = min(max(final_waypoints[0].twist.twist.linear.x, 0), max_speed_cap0)
 
 
@@ -190,21 +191,21 @@ def move_forward_waypoints(
     v_prev = w_prev.twist.twist.linear.x
     w = final_waypoints[i+1]
 
-    if final_desired_speed > 0.0:
-      max_speed_cap = final_desired_speed
+    if max_desired_speed > 0.0:
+      max_speed_cap = max_desired_speed
     else:
       max_speed_cap = w.twist.twist.linear.x
 
     dist = dl(w_prev.pose.pose.position, w.pose.pose.position)
 
-    max_v = math.sqrt(2 * max_acceleration * dist + v_prev * v_prev)
+    max_v = math.sqrt(2. * max_acceleration * dist * 10. + v_prev * v_prev)
 
     w.twist.twist.linear.x = min(max(max_v, 0), max_speed_cap)
 
   # TODO: Check return value
 
 
-def decelerate_waypoints(
+def decelerate_waypoints_old(
     final_waypoints,
     current_velocity,
     stop_distance = None,
@@ -260,7 +261,7 @@ def decelerate_waypoints(
     w.twist.twist.linear.x = v_all_dec
 
 
-def decelerate_waypoints2(
+def decelerate_waypoints(
     final_waypoints,
     current_velocity,
     stop_distance = None,

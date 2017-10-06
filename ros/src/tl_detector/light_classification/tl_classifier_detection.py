@@ -30,6 +30,9 @@ class TLClassifierDetection(object):
         self.model_dir = model_dir
         self.consensus = consensus
         self.predict_ready = False
+        self.session_is_starting = False
+
+        self.in_classification = False
 
         self.tf_session = None
         self.tf_graph = None
@@ -63,9 +66,13 @@ class TLClassifierDetection(object):
 
         """
 
+        if self.session_is_starting:
+            return
+
         # set up tensorflow and traffic light classifier
-        if self.tf_session is None:
+        if self.tf_session is None and not self.session_is_starting:
             rospy.loginfo("starting session ...")
+            self.session_is_starting = True
             # get the traffic light classifier
             self.config = tf.ConfigProto(log_device_placement=False)
             self.config.gpu_options.per_process_gpu_memory_fraction = 0.7  # don't hog all the VRAM!
@@ -87,6 +94,7 @@ class TLClassifierDetection(object):
                     self.detection_classes = self.tf_graph.get_tensor_by_name('detection_classes:0')
                     self.num_detections = self.tf_graph.get_tensor_by_name('num_detections:0')
                     self.predict_ready = True
+                    self.session_is_starting = False
 
 
         rospy.loginfo("session is ready ...")

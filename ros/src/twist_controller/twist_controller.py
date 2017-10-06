@@ -11,7 +11,8 @@ ONE_MPH = 0.44704
 
 class Controller(object):
     def __init__(self, decel_limit, accel_limit, max_steer_angle,
-          max_lat_accel, min_speed, wheel_base, steer_ratio, vehicle_mass, wheel_radius):
+          max_lat_accel, min_speed, wheel_base, steer_ratio, vehicle_mass, wheel_radius,
+          max_throttle, max_brake):
         self.decel_limit = decel_limit
         self.accel_limit = accel_limit
         self.max_steer_angle = max_steer_angle
@@ -20,7 +21,9 @@ class Controller(object):
 
         # self.throttle_pid = pid.PID(kp = 0.6, ki = 0.004, kd = 0.2, mn=decel_limit, mx=accel_limit)
 
-        self.throttle_pid = pid.PID(kp = 40.0, ki = 0.0, kd = 0.7, mn=-1.0, mx=1.0)
+        # self.throttle_pid = pid.PID(kp = 40.0, ki = 0.0, kd = 0.7, mn=max_brake, mx=max_throttle) # percents cte
+
+        self.throttle_pid = pid.PID(kp = 1.5, ki = 0.004, kd = 0.01, mn=max_brake, mx=max_throttle) # cte is m/s
 
         self.throttle_filter = lowpass.LowPassFilter(tau = 0.0, ts = 1.0)
 
@@ -68,6 +71,7 @@ class Controller(object):
         # throttle = self.throttle_filter.filt(throttle)
         # rospy.loginfo('ctrl: throttle_filtered = {}'.format(throttle))
 
+        '''
         # Based on Slack discussions and knowledge from first submissions
         # we've switched to the percentage values for brake & throttle
         if target_linear_velocity > current_linear_velocity:
@@ -78,8 +82,8 @@ class Controller(object):
           base = current_linear_velocity
           if current_linear_velocity > 0.1:
             velocity_cte = velocity_cte - 0.1
-
         velocity_cte = velocity_cte / base
+        '''
 
         # throttle = max(min(velocity_cte/base, 0.9), -0.9)
 
