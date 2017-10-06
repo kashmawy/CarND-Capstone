@@ -125,21 +125,21 @@ class Controller(object):
                 throttle *= 2
 
             # Stop still on red light :) - prevents slow movement near zero speed
-            if target_linear_velocity < 0.2:
-                throttle = -1.0
+            # if target_linear_velocity < 0.2:
+            #     throttle = -1.0
 
 
             brake = abs(self.vehicle_mass * self.wheel_radius * (-1.0 * throttle)) #  * self.decel_limit throttle
             # brake = -throttle
             throttle = 0.0
 
-        '''
+
         # Stop still on red light :) - prevents slow movement near zero speed
         if target_linear_velocity < 0.2:
             throttle = 0.0
             brake = abs(self.vehicle_mass * self.wheel_radius * 1.0)
             # brake = -0.01
-        '''
+
 
         # Return throttle, brake, steer
         return throttle, brake, steer

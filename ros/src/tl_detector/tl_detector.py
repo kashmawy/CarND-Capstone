@@ -501,6 +501,7 @@ class TLDetector(object):
             # Look at the image and classify light
             if self.light_detect_dist_min < light_dist_m < self.light_detect_dist_max:
             	state = self.get_light_state(light)
+                # state = TrafficLight.RED ## DEBUG
                 # rospy.loginfo('CLASSIFIER STATE: state = {}'.format(state))
 
                 # Publish annotated image_test topic for debug

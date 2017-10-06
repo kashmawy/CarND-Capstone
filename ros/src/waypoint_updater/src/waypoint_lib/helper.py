@@ -202,65 +202,66 @@ def move_forward_waypoints(
 
     w.twist.twist.linear.x = min(max(max_v, 0), max_speed_cap)
 
-  # TODO: Check return value
 
 
-def decelerate_waypoints_old(
-    final_waypoints,
-    current_velocity,
-    stop_distance = None,
-    max_deceleration = -1.0):
+#
+# def decelerate_waypoints_old(
+#     final_waypoints,
+#     current_velocity,
+#     stop_distance = None,
+#     max_deceleration = -1.0):
+#
+#
+#   if stop_distance is None:
+#     stop_distance = wp_distance(0, len(final_waypoints) - 1, final_waypoints)
+#
+#   all_dec = calc_acc(current_velocity, 0.0, stop_distance)
+#
+#   if all_dec < max_deceleration:
+#     all_dec = max_deceleration
+#
+#   d0 = dl(final_waypoints[0].pose.pose.position, final_waypoints[1].pose.pose.position)
+#
+#
+#
+#   final_waypoints[0].twist.twist.linear.x = 2 * all_dec * d0 + current_velocity * current_velocity
+#   # rospy.loginfo("(0) velocity = {}".format(final_waypoints[0].twist.twist.linear.x))
+#   if final_waypoints[0].twist.twist.linear.x > 0.001:
+#       final_waypoints[0].twist.twist.linear.x = math.sqrt(final_waypoints[0].twist.twist.linear.x)
+#   else:
+#       final_waypoints[0].twist.twist.linear.x = 0.2
+#
+#
+#   all_dist = 0
+#
+#   for i in range(len(final_waypoints) - 1):
+#     w_prev = final_waypoints[i]
+#     v_prev = w_prev.twist.twist.linear.x
+#     w = final_waypoints[i+1]
+#
+#     dist = dl(w_prev.pose.pose.position, w.pose.pose.position)
+#
+#     all_dist += dist
+#
+#     v_all_dec = 2 * all_dec * dist + v_prev * v_prev
+#     if v_all_dec > 0.0:
+#         v_all_dec = math.sqrt(v_all_dec)
+#     else:
+#         v_all_dec = 0.0
+#
+#     if all_dist < stop_distance and v_all_dec < 0.2:
+#         # rospy.loginfo("[{}] all_dist {:.2f} m < {} m === ({}, {})".format(i+1, all_dist, stop_distance, v_all_dec, all_dec))
+#         v_all_dec = 0.2
+#
+#     if all_dist > stop_distance:
+#         v_all_dec = 0.0
+#
+#
+#
+#     w.twist.twist.linear.x = v_all_dec
+#
 
-
-  if stop_distance is None:
-    stop_distance = wp_distance(0, len(final_waypoints) - 1, final_waypoints)
-
-  all_dec = calc_acc(current_velocity, 0.0, stop_distance)
-
-  if all_dec < max_deceleration:
-    all_dec = max_deceleration
-
-  d0 = dl(final_waypoints[0].pose.pose.position, final_waypoints[1].pose.pose.position)
-
-
-
-  final_waypoints[0].twist.twist.linear.x = 2 * all_dec * d0 + current_velocity * current_velocity
-  # rospy.loginfo("(0) velocity = {}".format(final_waypoints[0].twist.twist.linear.x))
-  if final_waypoints[0].twist.twist.linear.x > 0.001:
-      final_waypoints[0].twist.twist.linear.x = math.sqrt(final_waypoints[0].twist.twist.linear.x)
-  else:
-      final_waypoints[0].twist.twist.linear.x = 0.2
-
-
-  all_dist = 0
-
-  for i in range(len(final_waypoints) - 1):
-    w_prev = final_waypoints[i]
-    v_prev = w_prev.twist.twist.linear.x
-    w = final_waypoints[i+1]
-
-    dist = dl(w_prev.pose.pose.position, w.pose.pose.position)
-
-    all_dist += dist
-
-    v_all_dec = 2 * all_dec * dist + v_prev * v_prev
-    if v_all_dec > 0.0:
-        v_all_dec = math.sqrt(v_all_dec)
-    else:
-        v_all_dec = 0.0
-
-    if all_dist < stop_distance and v_all_dec < 0.2:
-        # rospy.loginfo("[{}] all_dist {:.2f} m < {} m === ({}, {})".format(i+1, all_dist, stop_distance, v_all_dec, all_dec))
-        v_all_dec = 0.2
-
-    if all_dist > stop_distance:
-        v_all_dec = 0.0
-
-
-
-    w.twist.twist.linear.x = v_all_dec
-
-
+# Slow down to zero
 def decelerate_waypoints(
     final_waypoints,
     current_velocity,
