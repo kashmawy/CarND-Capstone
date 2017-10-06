@@ -23,7 +23,7 @@ class Controller(object):
 
         # self.throttle_pid = pid.PID(kp = 40.0, ki = 0.0, kd = 0.7, mn=max_brake, mx=max_throttle) # percents cte
 
-        self.throttle_pid = pid.PID(kp = 1.5, ki = 0.004, kd = 0.01, mn=max_brake, mx=max_throttle) # cte is m/s
+        self.throttle_pid = pid.PID(kp = 1.5, ki = 0.0, kd = 0.01, mn=max_brake, mx=max_throttle) # cte is m/s
 
         self.throttle_filter = lowpass.LowPassFilter(tau = 0.0, ts = 1.0)
 
