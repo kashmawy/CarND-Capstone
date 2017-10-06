@@ -39,10 +39,10 @@ This component finally publishes the result to /final_waypoints.
 
 3. Control: The control component can be found under twist_controller and is responsible for the throttle, brake and steering based on the planning component.
 
-dbw_node is the component responsible for the control of the car. DBW node subscribes to the following topics:
+DBW Node is the component responsible for the control of the car. DBW node subscribes to the following topics:
 
 1. /current_velocity: This topic is used to receive the vehicle velocity.
-2. /twist_cmd:
+2. /twist_cmd: provides proposed linear and angular velocities.
 3. /vehicle/dbw_enabled: This topic is used to receive if the manual or autonomous mode is enabled.
 4. /current_pose: This topic is used to receive the vehicle position.
 5. /final_waypoints: This topic is used to receive the waypoints from the planning component (Waypoint Updater).
@@ -59,12 +59,13 @@ The following are the approaches we tried:
 
     We started with VGG16 with ImageNet weights and then we added one extra fully connected layer and finetuned it with both simulator images and site images.
     There were advantages and disadvantages to this approach. This approach gave good predictions with accuracy higher than 90%. However inference speed was very slow.
+    This led us to trying out SqueezeNet which has much faster inference speed. Having a fast inference speed is critical here because we want to ensure that this can run in realtime.
 
 
 2. SqueezeNet that was trained on Nexar and then finetuning
 
     We started with SqueezeNet that was trained on Nexar dataset and then we further finetuned it with the simulator images.
-    SqueezeNet was much more faster than VGG16 and had very high accuracy rate, over 90% and performed much better the the first approach.
+    SqueezeNet was much more faster than VGG16 and had very high accuracy rate, over 90% and performed much better than the first approach.
     Being originally trained on Nexar dataset as opposed to ImageNet must have contributed to that given that Nexar dataset are mainly traffic lights as opposed to ImageNet.
     However initially this model was not performing well on simulator images, only on site images. After fine tuning the model, the model started to perform much better on simulator images.
 
@@ -72,7 +73,6 @@ The following are the approaches we tried:
 
     TODO(Pavlo): Add more info
 
-This is the project repo for the final project of the Udacity Self-Driving Car Nanodegree: Programming a Real Self-Driving Car. For more information about the project, see the project introduction [here](https://classroom.udacity.com/nanodegrees/nd013/parts/6047fe34-d93c-4f50-8336-b70ef10cb4b2/modules/e1a23b06-329a-4684-a717-ad476f0d8dff/lessons/462c933d-9f24-42d3-8bdc-a08a5fc866e4/concepts/5ab4b122-83e6-436d-850f-9f4d26627fd9).
 
 ### Installation
 
