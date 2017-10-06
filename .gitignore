@@ -10,3 +10,4 @@ output_images
 .idea/
 *.iml
 
+.ipynb_checkpoints/

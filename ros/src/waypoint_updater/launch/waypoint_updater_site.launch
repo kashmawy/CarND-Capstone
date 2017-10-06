@@ -1,6 +1,11 @@
 <?xml version="1.0"?>
 <launch>
     <node pkg="waypoint_updater" type="waypoint_updater.py" name="waypoint_updater">
-      <param name="target_speed" value="10" />
+        <!-- if target_speed == 0 - use value from waypoint loader base_waypoints for max speed, any other - overwrite max speed -->
+        <param name="target_speed" value="0." />
+        <param name="max_acc" value="1.0" />
+        <param name="max_dec" value="-1.0" />
+        <!-- Dist from traffic light to stop line where car should stop -->
+        <param name="stop_line_dist" value="6.0" />
     </node>
 </launch>
