@@ -78,19 +78,23 @@ class WaypointUpdater(object):
         # dists = [self.dist_pose_waypoint(pose, wp) for wp in self.waypoints]
         # closest_waypoint = dists.index(min(dists))
 
+        # Find the number of waypoints
         waypoints_num = len(self.waypoints)
 
+        # Find the closer waypoint
         wp_next = helper.next_waypoint_idx(pose, self.waypoints)
 
         final_waypoints = []
 
         target_speed = self.target_speed
 
+        # Find the distance to the next traffic light
         # Distance to red light in waypoints
         wps_to_light = (self.red_light_wp - wp_next + waypoints_num) % waypoints_num
         # if wps_to_light < 0:
         #     wps_to_light += waypoints_num
 
+        # Place the next waypoint
         # Final waypoint of our path
         la_wp = (wp_next + LOOKAHEAD_WPS) % waypoints_num
 

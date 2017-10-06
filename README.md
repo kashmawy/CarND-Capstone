@@ -57,24 +57,43 @@ roslaunch launch/site.launch
 
 ### Architecture
 
-TODO(khalid and pavlo): Add more info.
+The following diagram shows the architecture of the project:
+
+![Architecture](imgs/SDC_Final_Architecture.png)
 
 ### Components
 
 The following are the main components of the project:
 
 1. Perception: The perception component can be found under tl_detector and is responsible for classifying if the vehicle has a red traffic light or green traffic light ahead of it.
-TL Detector subscribes to the images captured from the camera mounted on the vehicle and whenever the traffic light is within a certain distance, then it starts passing the image to the classifier for classification.
+
+TL Detector components subscribes to the images captured from the camera mounted on the vehicle (/image_color) and whenever the traffic light is within a certain distance, then it starts passing the image to the classifier for classification.
 The classifier classifies the image into either traffic light with red lights, green lights or yellow lights.
 The check for the traffic light being within a certain distance is done by checking against the YAML file which contains the positions of the traffic lights.
-
-TODO(kash): Add how is this used afterwards
+The state of the traffic light is then published to the following topic: /traffic_waypoint to be used by the other components.
 
 2. Planning: The planning component can be found under waypoint_updater and is responsible for creating a list of waypoints with an associated target velocity based on the perception component.
 
+Waypoint Updater component subscribes to the following topics:
+
+1. /traffic_waypoint: The topic that TL detector component publishes on whenever there is a traffic light.
+2. /current_velocity: This topic is used to receive the vehicle velocity.
+3. /current_pose: The topic used to receive the vehicle position.
+
+Waypoint Updater detects if there is a red traffic light ahead from the /traffic_waypoint in order to trigger deceleration, otherwise it updates the waypoints ahead on the path with velocities equal to the maximum velocities allowed.
+This component finally publishes the result to /final_waypoints.
+
 3. Control: The control component can be found under twist_controller and is responsible for the throttle, brake and steering based on the planning component.
 
-TODO(khalid and pavlo): Add more info
+dbw_node is the component responsible for the control of the car. DBW node subscribes to the following topics:
+
+1. /current_velocity: This topic is used to receive the vehicle velocity.
+2. /twist_cmd:
+3. /vehicle/dbw_enabled: This topic is used to receive if the manual or autonomous mode is enabled.
+4. /current_pose: This topic is used to receive the vehicle position.
+5. /final_waypoints: This topic is used to receive the waypoints from the planning component (Waypoint Updater).
+
+DBW Node implements a PID controller that takes into account if manual or autonomous mode is enabled. It takes the input from final_waypoints, current_pose, current_velocity and outputs throttling, steering and brake messages to the following topics /vehicle/throttle_cmd, /vehicle/steering_cmd and /vehicle/brake_cmd.
 
 ### Classification
 
