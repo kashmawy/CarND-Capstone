@@ -1,6 +1,6 @@
 ### Team Members
 
-The following are the team members:
+The following are the team members of selfdriven.tech team:
 
 1. Khalid Ashmawy (khalid.ashmawy@gmail.com)
 2. Pavlo Bashmakov (pavel.bashmakov@gmail.com)
