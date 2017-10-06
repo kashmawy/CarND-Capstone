@@ -5,6 +5,6 @@
       <param name="target_speed" value="0." />
       <param name="max_acc" value="1.0" />
       <param name="max_dec" value="-5.0" />
-      <param name="stop_line_dist" value="20.0" />
+      <param name="stop_line_dist" value="22.0" />
     </node>
 </launch>
