@@ -143,7 +143,7 @@ class WaypointUpdater(object):
             uniform_speed = True
             target_speed = self.target_speed
             self.slowing_down = False
-        elif dist_to_stop_line < 0:
+        elif dist_to_stop_line + 2 < 0:
             # We've already passed stop line
             if log_out: rospy.loginfo("missed stop line ({}) >>".format(dist_to_stop_line))
             uniform_speed = True
