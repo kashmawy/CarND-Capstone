@@ -300,7 +300,7 @@ def decelerate_waypoints(
 
 
     if stop_distance > 10.0:
-        exp_vels.append(math.sqrt(2. * abs(max_deceleration) * 1.0))
+        exp_vels.append(math.sqrt(2. * abs(max_deceleration) * 4.0))
         exp_dists.append(stop_distance - 8)
 
     if stop_distance > 4.0:

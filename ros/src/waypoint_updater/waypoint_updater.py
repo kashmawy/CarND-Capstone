@@ -195,8 +195,8 @@ class WaypointUpdater(object):
 
         if log_out:
             # rospy.loginfo('final_waypoints[0] = {}'.format(final_waypoints[0]))
-            rospy.loginfo("pose x, y, yaw = {}, {}, {}".format(pose.pose.position.x,
-                pose.pose.position.y, helper.yaw_from_orientation(pose.pose.orientation)))
+            # rospy.loginfo("pose x, y, yaw = {}, {}, {}".format(pose.pose.position.x,
+            #     pose.pose.position.y, helper.yaw_from_orientation(pose.pose.orientation)))
             # rospy.loginfo("next wp x, y   = {}, {}".format(final_waypoints[0].pose.pose.position.x,
             #     final_waypoints[0].pose.pose.position.y))
             # rospy.loginfo("next wp linear.x   = {}".format(final_waypoints[0].twist.twist.linear.x))
@@ -204,9 +204,9 @@ class WaypointUpdater(object):
             rospy.loginfo('wp_next = {}'.format(wp_next))
             rospy.loginfo('red_light_wp = {}'.format(self.red_light_wp))
             if self.red_light_wp > 0:
-                rospy.loginfo("dist_to_stop_line = {} m".format(dist_to_stop_line))
-                rospy.loginfo("dist_to_light = {} m".format(dist_to_light))
-            rospy.loginfo("lookahead_dist = {} m".format(helper.wp_distance(0, len(final_waypoints)-1, final_waypoints)))
+                rospy.loginfo("dist_to_stop_line = {:.2f} m".format(dist_to_stop_line))
+                rospy.loginfo("dist_to_light = {:.2f} m".format(dist_to_light))
+            rospy.loginfo("lookahead_dist = {:.2f} m".format(helper.wp_distance(0, len(final_waypoints)-1, final_waypoints)))
             # rospy.loginfo('dist to zero = {}'.format(wps_to_light - decel_len))
             # rospy.loginfo('len wp = {}'.format(len(final_waypoints)))
 
@@ -237,7 +237,7 @@ class WaypointUpdater(object):
     def traffic_cb(self, msg):
         # TODO: Callback for /traffic_waypoint message. Implement
         self.red_light_wp = int(msg.data)
-        rospy.loginfo('received red_light_wp = {}'.format(self.red_light_wp))
+        # rospy.loginfo('received red_light_wp = {}'.format(self.red_light_wp))
 
 
     def obstacle_cb(self, msg):
