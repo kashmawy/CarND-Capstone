@@ -99,7 +99,9 @@ We've tried to made all necessary param changes inside relevant launch files, so
 roslaunch launch/site.launch
 ```
 
+## Run Video
 
+[![Run Video](https://img.youtube.com/vi/aiCQpeUyNwc/0.jpg)](https://www.youtube.com/watch?v=aiCQpeUyNwc&feature=youtu.be)
 
 ### Installation
 
