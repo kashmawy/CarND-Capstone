@@ -4,14 +4,6 @@
 [image_test]: ./imgs/image_test.png "Lane Estimation"
 
 
-The following are the team members of selfdriven.tech team:
-
-1. Khalid Ashmawy (khalid.ashmawy@gmail.com)
-2. Pavlo Bashmakov (pavel.bashmakov@gmail.com)
-3. Mertin Curban-gazi (mertin23@yahoo.com)
-4. John Ryan (jtryan666@gmail.com)
-5. Brian Chan (499938834@qq.com)
-
 ### Architecture
 
 The following diagram shows the architecture of the project:
